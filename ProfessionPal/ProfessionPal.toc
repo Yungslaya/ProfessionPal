@@ -1,0 +1,28 @@
+## Interface: 16001
+## Title: ProfessionPal
+## Notes: Simple profession leveling guide for all professions. Type /prof
+## Author: ProfessionPal
+## Version: 1.1.0
+## SavedVariables: ProfessionPalDB
+## OptionalDeps: TomTom
+## IconTexture: Interface\Icons\Trade_Mining
+
+Core.lua
+Data_Mining.lua
+Data_Blacksmithing.lua
+Data_BlacksmithingGear.lua
+Data_Herbalism.lua
+Data_Alchemy.lua
+Data_Skinning.lua
+Data_Leatherworking.lua
+Data_Tailoring.lua
+Data_Engineering.lua
+Data_Enchanting.lua
+Data_Cooking.lua
+Data_FirstAid.lua
+Data_Fishing.lua
+Data_GearOther.lua
+Gear.lua
+UI.lua
+Tracker.lua
+AutoLearn.lua
