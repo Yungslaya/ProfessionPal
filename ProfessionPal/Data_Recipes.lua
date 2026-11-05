@@ -125,14 +125,14 @@ PP.Favor = {
 
 -- Scarce materials: [itemID] = where to get it (short)
 PP.ScarceMats = {
-    [249427] = "Rare drop from beasts and skinning (level 10-25), or Auction House",  -- Pristine Leather
-    [249410] = "Made by Alchemists, or Auction House",                                -- Sulfuric Acid
-    [249432] = "Made by Engineers, or Auction House",                                 -- Sandpaper
-    [251290] = "Alchemist transmute, or Auction House",                               -- Legionite Bar
-    [249726] = "New Forever material: Auction House",                                 -- Azerothium Bar
-    [251291] = "New Forever material: Auction House",                                 -- Heavy Thorium Bar
-    [248820] = "New Forever material: Auction House",                                 -- Torbernite
-    [248822] = "New Forever herb: Auction House",                                     -- Death Lotus
+    [249427] = "A rare drop from beasts around level 10-25, and sometimes from skinning them. Or buy it on the Auction House.",  -- Pristine Leather
+    [249410] = "Made by Alchemists. Buy it on the Auction House, or ask an Alchemist friend.",                                -- Sulfuric Acid
+    [249432] = "Made by Engineers. Buy it on the Auction House, or ask an Engineer friend.",                                 -- Sandpaper
+    [251290] = "Made by Alchemists (a transmute). Buy it on the Auction House.",                               -- Legionite Bar
+    [249726] = "A new WoW Forever material. Buy it on the Auction House.",                                 -- Azerothium Bar
+    [251291] = "A new WoW Forever material. Buy it on the Auction House.",                                 -- Heavy Thorium Bar
+    [248820] = "A new WoW Forever material. Buy it on the Auction House.",                                 -- Torbernite
+    [248822] = "A new WoW Forever herb. Buy it on the Auction House.",                                     -- Death Lotus
 }
 
 PP.ScarceNames = {
@@ -220,4 +220,103 @@ cooking = {
   {25,30, "Venomous Smoothie"}, {100,30, "Slimy Smoothie"}, {125,30, "Mrrggl Smrrthle"},
   {180,60, "Calcified Smoothie"}, {200,60, "Spicy Smoothie"}, {250,90, "Wicked Smoothie"},
 },
+}
+
+
+--[[ Where to get crafting materials (used by the gear shopping lists)
+  Plain words for a player. Classic sources, checked against the Wowhead Forever
+  item pages for the new Forever materials (see PP.ScarceMats above).
+  PP.MatInfo[itemID] = { "Name", "where to get it" }
+  PP.MakeFrom[itemID] = { materialID, amount each }  -- things you make yourself
+]]
+local AH = " Or buy it on the Auction House."
+local function ore(o, zones) return "Smelt " .. o .. " at any forge (Mining). You find " .. o .. " in " .. zones .. "." .. AH end
+local function skin(lv) return "Skin beasts around level " .. lv .. " (Skinning)." .. AH end
+local function cloth(lv) return "Drops from humanoid mobs (people) around level " .. lv .. "." .. AH end
+local GEM = "Found now and then while mining ore veins." .. AH
+local PEARL = "Open clams from murlocs, crabs and turtles along the coast." .. AH
+local DUST = "Made by Enchanters when they disenchant green items." .. AH
+local ELEM = "Drops from elemental mobs (fire, water, earth or air creatures)." .. AH
+local HERB = "Pick it with Herbalism." .. AH
+local VENDOR = "Sold by trade supply vendors in most towns."
+
+PP.MatInfo = {
+    -- bars
+    [2840] = { "Copper Bar", ore("Copper Ore", "the starting zones: Elwynn Forest, Dun Morogh, Durotar, Mulgore, Tirisfal and Darkshore") },
+    [3576] = { "Tin Bar", ore("Tin Ore", "Westfall, Redridge, Loch Modan, the Barrens and Silverpine") },
+    [2841] = { "Bronze Bar", "Smelt 1 Copper Bar and 1 Tin Bar together at a forge (Mining 65)." .. AH },
+    [2842] = { "Silver Bar", ore("Silver Ore", "Redridge, Hillsbrad and the Barrens (it is rare)") },
+    [3575] = { "Iron Bar", ore("Iron Ore", "Arathi Highlands, Stranglethorn, Desolace and Thousand Needles") },
+    [3577] = { "Gold Bar", ore("Gold Ore", "Arathi Highlands, Stranglethorn and the Badlands (it is rare)") },
+    [3859] = { "Steel Bar", "Smelt 1 Iron Bar and 1 Coal at a forge (Mining 165). Mining supply vendors sell Coal." .. AH },
+    [3860] = { "Mithril Bar", ore("Mithril Ore", "the Hinterlands, Tanaris, the Badlands and Searing Gorge") },
+    [6037] = { "Truesilver Bar", ore("Truesilver Ore", "the same zones as Mithril (it is rare)") },
+    [12359] = { "Thorium Bar", ore("Thorium Ore", "Un'Goro Crater, Winterspring, Burning Steppes and Eastern Plaguelands") },
+    [12360] = { "Arcanite Bar", "Made by Alchemists (a transmute)." .. AH },
+    [12655] = { "Enchanted Thorium Bar", "Made by Enchanters from a Thorium Bar." .. AH },
+    -- stones and grinding stones (you make these)
+    [2835] = { "Rough Stone", "Comes from mining Copper veins." .. AH },
+    [2836] = { "Coarse Stone", "Comes from mining Tin veins." .. AH },
+    [2838] = { "Heavy Stone", "Comes from mining Iron veins." .. AH },
+    [7912] = { "Solid Stone", "Comes from mining Mithril veins." .. AH },
+    [12365] = { "Dense Stone", "Comes from mining Thorium veins." .. AH },
+    [3470] = { "Rough Grinding Stone", "You make this yourself (Blacksmithing): 2 Rough Stone each." },
+    [3478] = { "Coarse Grinding Stone", "You make this yourself (Blacksmithing): 2 Coarse Stone each." },
+    [3486] = { "Heavy Grinding Stone", "You make this yourself (Blacksmithing): 3 Heavy Stone each." },
+    [7966] = { "Solid Grinding Stone", "You make this yourself (Blacksmithing): 4 Solid Stone each." },
+    [12644] = { "Dense Grinding Stone", "You make this yourself (Blacksmithing): 4 Dense Stone each." },
+    -- flux
+    [2880] = { "Weak Flux", "Sold by blacksmithing and trade supply vendors in most towns." },
+    [3466] = { "Strong Flux", "Sold by blacksmithing and trade supply vendors in most towns." },
+    [18567] = { "Elemental Flux", "Sold by the Thorium Brotherhood vendor inside Blackrock Depths." .. AH },
+    -- gems and pearls
+    [774] = { "Malachite", GEM }, [818] = { "Tigerseye", GEM }, [1210] = { "Shadowgem", GEM },
+    [1206] = { "Moss Agate", GEM }, [1705] = { "Lesser Moonstone", GEM }, [1529] = { "Jade", GEM },
+    [3864] = { "Citrine", GEM }, [7909] = { "Aquamarine", GEM }, [7910] = { "Star Ruby", GEM },
+    [12799] = { "Large Opal", GEM }, [12364] = { "Huge Emerald", GEM }, [12361] = { "Blue Sapphire", GEM },
+    [5498] = { "Small Lustrous Pearl", PEARL }, [5500] = { "Iridescent Pearl", PEARL },
+    [7971] = { "Black Pearl", PEARL }, [13926] = { "Golden Pearl", PEARL },
+    -- leather and cloth
+    [2318] = { "Light Leather", skin("1-20") }, [2319] = { "Medium Leather", skin("15-30") },
+    [4234] = { "Heavy Leather", skin("25-40") }, [4304] = { "Thick Leather", skin("35-50") },
+    [8170] = { "Rugged Leather", skin("45-60") },
+    [2589] = { "Linen Cloth", cloth("5-15") }, [2592] = { "Wool Cloth", cloth("15-25") },
+    [4306] = { "Silk Cloth", cloth("25-35") }, [4338] = { "Mageweave Cloth", cloth("35-45") },
+    [14047] = { "Runecloth", cloth("45-60") },
+    [2320] = { "Coarse Thread", VENDOR }, [2321] = { "Fine Thread", VENDOR }, [4291] = { "Silken Thread", VENDOR },
+    [8343] = { "Heavy Silken Thread", VENDOR }, [14341] = { "Rune Thread", VENDOR },
+    [2604] = { "Red Dye", VENDOR }, [2605] = { "Green Dye", VENDOR }, [4340] = { "Gray Dye", VENDOR },
+    [2324] = { "Bleach", VENDOR }, [2325] = { "Black Dye", VENDOR }, [6260] = { "Blue Dye", VENDOR },
+    [4289] = { "Salt", VENDOR },
+    [3371] = { "Empty Vial", "Sold by alchemy supply vendors." }, [3372] = { "Leaded Vial", "Sold by alchemy supply vendors." },
+    [8925] = { "Crystal Vial", "Sold by alchemy supply vendors." },
+    -- enchanting
+    [10940] = { "Strange Dust", DUST }, [10938] = { "Lesser Magic Essence", DUST }, [10939] = { "Greater Magic Essence", DUST },
+    [11083] = { "Soul Dust", DUST }, [11137] = { "Vision Dust", DUST }, [11176] = { "Dream Dust", DUST },
+    [16204] = { "Illusion Dust", DUST }, [11138] = { "Small Glowing Shard", DUST }, [11139] = { "Large Glowing Shard", DUST },
+    [14343] = { "Small Brilliant Shard", DUST }, [14344] = { "Large Brilliant Shard", DUST },
+    -- elemental
+    [7067] = { "Elemental Earth", ELEM }, [7068] = { "Elemental Fire", ELEM }, [7069] = { "Elemental Air", ELEM },
+    [7070] = { "Elemental Water", ELEM }, [7075] = { "Core of Earth", ELEM }, [7076] = { "Essence of Earth", ELEM },
+    [7077] = { "Heart of Fire", ELEM }, [7078] = { "Essence of Fire", ELEM }, [7079] = { "Globe of Water", ELEM },
+    [7080] = { "Essence of Water", ELEM }, [7081] = { "Breath of Wind", ELEM }, [7082] = { "Essence of Air", ELEM },
+    [12803] = { "Living Essence", ELEM }, [12808] = { "Essence of Undeath", "Drops from undead mobs in the Plaguelands." .. AH },
+    [12811] = { "Righteous Orb", "Drops from mobs in Stratholme." .. AH },
+    -- herbs
+    [2447] = { "Peacebloom", HERB }, [765] = { "Silverleaf", HERB }, [2449] = { "Earthroot", HERB },
+    [785] = { "Mageroyal", HERB }, [2450] = { "Briarthorn", HERB }, [2452] = { "Swiftthistle", HERB },
+    [2453] = { "Bruiseweed", HERB }, [3820] = { "Stranglekelp", HERB }, [3355] = { "Wild Steelbloom", HERB },
+    [3356] = { "Kingsblood", HERB }, [3357] = { "Liferoot", HERB }, [3818] = { "Fadeleaf", HERB },
+    [3821] = { "Goldthorn", HERB }, [3358] = { "Khadgar's Whisker", HERB }, [3819] = { "Wintersbite", HERB },
+    [4625] = { "Firebloom", HERB }, [8831] = { "Purple Lotus", HERB }, [8836] = { "Arthas' Tears", HERB },
+    [8838] = { "Sungrass", HERB }, [8839] = { "Blindweed", HERB }, [8845] = { "Ghost Mushroom", HERB },
+    [8846] = { "Gromsblood", HERB }, [13463] = { "Dreamfoil", HERB }, [13464] = { "Golden Sansam", HERB },
+    [13465] = { "Mountain Silversage", HERB }, [13466] = { "Plaguebloom", HERB }, [13467] = { "Icecap", HERB },
+    -- made by other crafters
+    [4255] = { "Green Leather Armor", "Made by Leatherworkers." .. AH },
+    [5966] = { "Guardian Gloves", "Made by Leatherworkers." .. AH },
+}
+
+PP.MakeFrom = {
+    [3470] = { 2835, 2 }, [3478] = { 2836, 2 }, [3486] = { 2838, 3 }, [7966] = { 7912, 4 }, [12644] = { 12365, 4 },
 }

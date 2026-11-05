@@ -140,12 +140,31 @@ function PP:ScanKnownRecipes()
     local key = CharKey()
     local t = self.db.known[key] or {}
     self.db.known[key] = t
+    self.db.recipeMats = self.db.recipeMats or {}
+    local mats = self.db.recipeMats
     local added = false
     for _, id in ipairs(ids) do
         local info = safe(C_TradeSkillUI.GetRecipeInfo, id)
-        if type(info) == "table" and info.learned and info.name and not t[info.name] then
-            t[info.name] = true
-            added = true
+        if type(info) == "table" and info.name then
+            if info.learned and not t[info.name] then
+                t[info.name] = true
+                added = true
+            end
+            -- remember what this recipe needs (for the gear shopping lists)
+            if not mats[info.name] and C_TradeSkillUI.GetRecipeSchematic then
+                local sch = safe(C_TradeSkillUI.GetRecipeSchematic, id, false)
+                if type(sch) == "table" and type(sch.reagentSlotSchematics) == "table" then
+                    local list = {}
+                    for _, slot in ipairs(sch.reagentSlotSchematics) do
+                        local r = slot.reagents and slot.reagents[1]
+                        local n = slot.quantityRequired
+                        if r and r.itemID and type(n) == "number" and n > 0 and slot.required ~= false then
+                            list[#list + 1] = { r.itemID, n }
+                        end
+                    end
+                    if #list > 0 then mats[info.name] = list end
+                end
+            end
         end
     end
     if added and self.RequestRefresh then self:RequestRefresh() end
@@ -154,6 +173,77 @@ end
 function PP:KnowsCraft(name)
     local t = self.db and self.db.known and self.db.known[CharKey()]
     return (t and name and t[name]) and true or false
+end
+
+-- Materials for one crafted piece: from our data, or read from your profession window
+function PP:GearMats(it)
+    if it.mats then return it.mats end
+    local m = self.db and self.db.recipeMats
+    return m and m[it.name]
+end
+
+function PP:MatName(id)
+    return (C_Item and C_Item.GetItemNameByID and safe(C_Item.GetItemNameByID, id))
+        or (PP.MatInfo and PP.MatInfo[id] and PP.MatInfo[id][1])
+        or (PP.ScarceNames and PP.ScarceNames[id]) or ("Item " .. id)
+end
+
+function PP:MatWhere(id)
+    if PP.ScarceMats and PP.ScarceMats[id] then return PP.ScarceMats[id] end
+    local mi = PP.MatInfo and PP.MatInfo[id]
+    if mi then return mi[2] end
+    return "Buy it on the Auction House, or ask a friend who makes or gathers it."
+end
+
+-- Shopping list for one or more gear pieces (one of each).
+-- Returns mats { id, name, have, need, where, rare, sub, done }, plans {it}, nomats {it}
+function PP:GearShopping(items)
+    local need, order, plans, nomats = {}, {}, {}, {}
+    for _, it in ipairs(items) do
+        local mats = self:GearMats(it)
+        if mats then
+            for _, m in ipairs(mats) do
+                if not need[m[1]] then need[m[1]] = 0; order[#order + 1] = m[1] end
+                need[m[1]] = need[m[1]] + m[2]
+            end
+        else
+            nomats[#nomats + 1] = it
+        end
+        if it.src ~= "T" and not self:KnowsCraft(it.name) then plans[#plans + 1] = it end
+    end
+    -- groups: a material, plus what you make it from when you are short
+    local groups = {}
+    for i, id in ipairs(order) do
+        local have, n = self:Count(id), need[id]
+        local g = { i = i, done = have >= n }
+        g[1] = { id = id, name = self:MatName(id), have = have, need = n, where = self:MatWhere(id),
+                 rare = PP.ScarceMats and PP.ScarceMats[id] and true }
+        local mk = PP.MakeFrom and PP.MakeFrom[id]
+        if mk and have < n then
+            g[2] = { id = mk[1], name = self:MatName(mk[1]), have = self:Count(mk[1]), need = (n - have) * mk[2],
+                     where = self:MatWhere(mk[1]), sub = true }
+        end
+        groups[#groups + 1] = g
+    end
+    -- missing things first, things you already have at the bottom
+    table.sort(groups, function(a, b)
+        if a.done ~= b.done then return not a.done end
+        return a.i < b.i
+    end)
+    local out = {}
+    for _, g in ipairs(groups) do
+        for _, r in ipairs(g) do out[#out + 1] = r end
+    end
+    return out, plans, nomats
+end
+
+-- Every piece the guide says to make right now (the "Make it!" rows)
+function PP:GearShopAllItems(def, skill)
+    local items = {}
+    for _, row in ipairs(self:GearBySlot(def, skill)) do
+        if row.now and row.now.upgrade then items[#items + 1] = row.now.it end
+    end
+    return items
 end
 
 function PP:RecipesScanned()
@@ -181,7 +271,7 @@ function PP:GearAccess(it)
             why[#why + 1] = "needs a recipe (drop or vendor)"
         end
     end
-    for _, m in ipairs(it.mats or {}) do
+    for _, m in ipairs(self:GearMats(it) or {}) do
         if PP.ScarceMats and PP.ScarceMats[m[1]] then
             local have = self:Count(m[1])
             if have < m[2] then
@@ -393,7 +483,7 @@ function PP:GearTooltip(owner, it)
     end
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("Skill " .. it.skill .. "  -  " .. self:GearSourceText(it), 1, 0.82, 0)
-    for _, m in ipairs(it.mats or {}) do
+    for _, m in ipairs(self:GearMats(it) or {}) do
         local name = (C_Item and C_Item.GetItemNameByID and safe(C_Item.GetItemNameByID, m[1])) or ("item " .. m[1])
         local have = self:Count(m[1])
         local ok = have >= m[2]
