@@ -7,6 +7,8 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 No account needed. Beta 1.1.1 · for WoW: Forever (interface 16001)
 
+**Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
+
 | 12 | 1–300 | 521 | 9 |
 |:--:|:--:|:--:|:--:|
 | professions | every skill point mapped | crafted items ranked | classes, 3 roles |
