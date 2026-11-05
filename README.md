@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.2.6 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.2.7 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -30,6 +30,7 @@ Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherwork
 
 ## What's new
 
+- **1.2.7:** When you have all the materials for a gear piece, its button turns into a green "Craft it". Click once to open your profession at that recipe, click again to make it. It also tells you where to stand (anvil, cooking fire...).
 - **1.2.6:** Every gear pick has a "What I need" button: a shopping list with have/need and where to get each material. "Shop for All" adds up everything for all the pieces it recommends.
 - **1.2.5:** Gear picks now know about Merchant's Favor plans and rare materials (like Pristine Leather). If you can't make a piece yet, you get one you can make now, plus a "Better:" line that says what the better piece needs and where to get it.
 - **1.2.4:** Fixed the Blacksmithing button showing a purple gem. Profession buttons now always show their own icon.
@@ -55,7 +56,7 @@ All versions: [Releases](https://github.com/Yungslaya/ProfessionPal/releases)
 
 ## Is it safe to run?
 
-Yes. It reads your skill and your bags and shows you text. It never crafts, gathers, moves your character or buys anything by itself. The spell buttons are ordinary click buttons, one click and one cast, same as your action bar. The only thing that can spend gold is auto-learn, and it ships switched off.
+Yes. It reads your skill and your bags and shows you text. It never crafts, gathers, moves your character or buys anything by itself. The spell buttons are ordinary click buttons, one click and one cast, same as your action bar. The **Craft it** button works the same way: one click makes one item, just like the Create button in the game's own profession window. The only thing that can spend gold is auto-learn, and it ships switched off.
 
 ## Testers
 

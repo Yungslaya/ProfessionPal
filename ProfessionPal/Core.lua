@@ -1,6 +1,7 @@
 --[[ ProfessionPal - Core
   A display-only profession leveling guide for WoW: Forever.
-  It never crafts, gathers, buys, moves or clicks anything for you.
+  It never gathers, buys, moves or clicks anything for you. The only craft is the
+  "Craft it" button: one click = one craft, like the game's own Create button.
   It only reads your skill level and bag/bank counts and shows text.
 
   How data works (so more professions can be added later):

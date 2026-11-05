@@ -150,6 +150,10 @@ function PP:ScanKnownRecipes()
                 t[info.name] = true
                 added = true
             end
+            if info.learned then
+                self.db.recipeIDs = self.db.recipeIDs or {}
+                self.db.recipeIDs[info.name] = id
+            end
             -- remember what this recipe needs (for the gear shopping lists)
             if not mats[info.name] and C_TradeSkillUI.GetRecipeSchematic then
                 local sch = safe(C_TradeSkillUI.GetRecipeSchematic, id, false)
@@ -244,6 +248,63 @@ function PP:GearShopAllItems(def, skill)
         if row.now and row.now.upgrade then items[#items + 1] = row.now.it end
     end
     return items
+end
+
+-- ---------- "Craft it" button ----------
+-- One click = one craft, exactly like the Create button in the game's own
+-- profession window. The game itself checks for the anvil / fire / tools.
+PP.CRAFT_WHERE = {
+    blacksmithing = "Stand next to an anvil, with a Blacksmith Hammer in your bags.",
+    cooking = "Stand next to a cooking fire. (You can make one with Basic Campfire.)",
+    engineering = "Keep a Blacksmith Hammer and an Arclight Spanner in your bags for some items.",
+    enchanting = "Works anywhere. Some items need an enchanting rod in your bags.",
+}
+
+function PP:MatsReady(it)
+    local mats = self:GearMats(it)
+    if not mats then return false end
+    for _, m in ipairs(mats) do
+        if self:Count(m[1]) < m[2] then return false end
+    end
+    return true
+end
+
+-- Show the Craft button: you have the materials and know (or can train) the recipe
+function PP:CanCraft(it)
+    return self:MatsReady(it) and (it.src == "T" or self:KnowsCraft(it.name))
+end
+
+local function ProfessionOpen()
+    local pf = _G.ProfessionsFrame or _G.TradeSkillFrame
+    return pf and pf.IsShown and pf:IsShown() and true or false
+end
+
+function PP:CraftGear(it)
+    local ui = C_TradeSkillUI
+    if not (it and ui) then return end
+    if self:InCombat() then self:Print("You can't craft in combat.") return end
+    local id = self.db.recipeIDs and self.db.recipeIDs[it.name]
+    if id and ProfessionOpen() and ui.CraftRecipe then
+        local info = safe(ui.GetRecipeInfo, id)
+        if type(info) == "table" and info.learned == false then
+            self:Print("Learn " .. it.name .. " at your trainer first.")
+            return
+        end
+        safe(ui.CraftRecipe, id, 1)
+        return
+    end
+    if not id and ProfessionOpen() and self:RecipesScanned() then
+        self:Print("You don't know " .. it.name .. " yet. Learn it at your trainer first.")
+        return
+    end
+    -- not open yet: open your profession at this recipe, then click again to craft
+    if id and ui.OpenRecipe then
+        safe(ui.OpenRecipe, id)
+    else
+        local def = self:SelectedDef()
+        if def and def.skillLine and ui.OpenTradeSkill then safe(ui.OpenTradeSkill, def.skillLine) end
+    end
+    self:Print("Opened your profession. Click |cff33ff33Craft it|r again to make " .. it.name .. ".")
 end
 
 function PP:RecipesScanned()

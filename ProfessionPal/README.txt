@@ -1,4 +1,4 @@
-ProfessionPal 1.2.6 (beta)  -  a profession leveling guide for WoW: Forever
+ProfessionPal 1.2.7 (beta)  -  a profession leveling guide for WoW: Forever
 ==========================================================================
 
 Every profession, skill 1 to 300, inside the game. Type /prof.
@@ -47,8 +47,9 @@ SETTINGS (button in the window)
 IS IT SAFE?
 -----------
 It only reads and shows information. It never crafts, gathers, moves,
-or buys for you. The spell buttons are normal click buttons (one click
-= one cast, like an action bar). The only thing that spends gold is the
+or buys by itself. The spell buttons are normal click buttons (one click
+= one cast, like an action bar). The "Craft it" button is the same:
+one click = one item, like the game's own Create button. The only thing that spends gold is the
 optional auto-learn, and it is off until you turn it on.
 
 WHERE THE DATA COMES FROM

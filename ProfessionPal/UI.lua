@@ -245,8 +245,15 @@ function PP:BuildUI()
         r.icon = Icon(r, 34); r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
         r.name = Text(r, 15, C.white); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 10, -1); r.name:SetWidth(TEXTW - 130)
         r.sub = Text(r, 13, C.gray); r.sub:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -3); r.sub:SetWidth(TEXTW - 130)
-        r.list = Button(r, "What I need", 110, 26, function() PP:ShowGearShop({ r.it }) end)
+        r.list = Button(r, "What I need", 110, 26, function()
+            if r.craft then PP:CraftGear(r.it) else PP:ShowGearShop({ r.it }) end
+        end)
         r.list:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+        function r:SetCraft(on)
+            self.craft = on
+            self.list:SetText(on and "Craft it" or "What I need")
+            self.list:SetLabelColor(on and C.green or C.gold)
+        end
         r:SetScript("OnEnter", function(self) PP:GearTooltip(self, self.it) end)
         r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
         r:Hide()
@@ -503,6 +510,7 @@ function PP:Refresh()
                 r.name:SetTextColor(unpack(PP.QualityColor(it.q)))
                 local wear = (it.level > lvl) and ("wear at level " .. it.level) or ("level " .. it.level)
                 r.sub:SetText((PP.SLOT_NAMES[it.slot] or "") .. "  -  " .. wear .. "  -  " .. self:GearSourceText(it))
+                r:SetCraft(self:CanCraft(it))
                 P:Put(r, 40, 30, 4)
             end
             -- a better piece that needs plans or rare materials (hover = how to get them)
@@ -513,6 +521,7 @@ function PP:Refresh()
                 r.name:SetText("Better: " .. it.name)
                 r.name:SetTextColor(unpack(PP.QualityColor(it.q)))
                 r.sub:SetText((PP.SLOT_NAMES[it.slot] or "") .. "  -  " .. betterPick.why)
+                r:SetCraft(false)
                 r.sub:SetTextColor(1, 0.55, 0.15)
                 P:Put(r, 40, 30, 4)
             end
@@ -675,7 +684,9 @@ function PP:BuildGear()
         r.icon = Icon(r, 32); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 84, 0)
         r.name = Text(r, 15, C.white); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 8, -1); r.name:SetWidth(270)
         r.state = Text(r, 14, C.green, "RIGHT"); r.state:SetPoint("TOPRIGHT", r, "TOPRIGHT", 0, -2); r.state:SetWidth(110)
-        r.list = Button(r, "What I need", 110, 24, function() PP:ShowGearShop({ r.it }) end)
+        r.list = Button(r, "What I need", 110, 24, function()
+            if r.craft then PP:CraftGear(r.it) else PP:ShowGearShop({ r.it }) end
+        end)
         r.list:SetPoint("TOPRIGHT", r, "TOPRIGHT", 0, -20)
         r.sub = Text(r, 13, C.gray); r.sub:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -2); r.sub:SetWidth(380)
         r:SetScript("OnEnter", function(self) PP:GearTooltip(self, self.it) end)
@@ -728,6 +739,9 @@ function PP:RefreshGear()
             extra = extra + 14
         end
         if it.plan or (row.better and row.better.it.plan) then needCamp = true end
+        r.craft = row.now and p == row.now and self:CanCraft(it)
+        r.list:SetText(r.craft and "Craft it" or "What I need")
+        r.list:SetLabelColor(r.craft and C.green or C.gold)
         r.sub:SetText(sub)
         if row.now and row.now.upgrade then
             r.state:SetText(row.now.state == "buy" and "Buy plans" or "Make it!"); SetColor(r.state, C.green)
@@ -786,6 +800,9 @@ function PP:BuildGearShop()
         w.rows[i] = r
     end
     w.camp = PersonRow(w)
+    w.craftBtn = Button(w, "Craft it", 180, 34, function() PP:CraftGear(w.items and w.items[1]) end)
+    w.craftBtn:SetLabelColor(C.green)
+    w.craftWhere = Text(w, 14, C.white); w.craftWhere:SetWidth(SHOPW - 260)
     w.note = Text(w, 14, C.yellow); w.note:SetWidth(SHOPW - 60)
     w.key = Text(w, 13, C.gray); w.key:SetWidth(SHOPW - 60)
     w.key:SetText("Green = you have enough. Counts include your bags and bank.")
@@ -821,7 +838,7 @@ function PP:RefreshGearShop()
     if not (w and w:IsShown()) then return end
     local items = w.items or {}
     for _, r in ipairs(w.rows) do r:Hide() end
-    for _, k in ipairs({ "head", "forText", "status", "matHead", "planHead", "camp", "note" }) do w[k]:Hide() end
+    for _, k in ipairs({ "head", "forText", "status", "matHead", "planHead", "camp", "note", "craftBtn", "craftWhere" }) do w[k]:Hide() end
     local P = Placer(w, -50)
     local function slotName(it) return PP.SLOT_NAMES[it.slot] or "" end
 
@@ -863,6 +880,14 @@ function PP:RefreshGearShop()
             SetColor(w.status, C.orange)
         end
         P:Put(w.status, 20, 30, 10)
+    end
+    -- one piece and everything is ready: a big Craft button
+    if #items == 1 and self:CanCraft(items[1]) then
+        local def = self:SelectedDef()
+        w.craftWhere:SetText((def and PP.CRAFT_WHERE[def.key]) or "Works anywhere.")
+        local th = P:TextH(w.craftWhere, 16)
+        P:Put(w.craftBtn, math.max(34, th), 30, 10)
+        w.craftWhere:ClearAllPoints(); w.craftWhere:SetPoint("LEFT", w.craftBtn, "RIGHT", 14, 0); w.craftWhere:Show()
     end
 
     -- recipes / plans you don't have yet
