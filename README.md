@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.2.3 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.2.4 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -30,6 +30,7 @@ Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherwork
 
 ## What's new
 
+- **1.2.4:** Fixed the Blacksmithing button showing a purple gem. Profession buttons now always show their own icon.
 - **1.2.3:** Trainers and farm zones are now sorted by real travel time, using boats, the tram and zeppelins, not just map distance. In Auberdine, Journeyman Engineering now sends you to Stormwind by boat instead of Gadgetzan.
 - **1.2.2:** Map pins fixed for WoW Forever's Stormwind map.
 - **1.2.1:** New navy look that matches RestedXP.

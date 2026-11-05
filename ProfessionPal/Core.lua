@@ -294,7 +294,11 @@ function PP:ActionSpells()
     for _, def in ipairs(self.professions) do
         if def.spells and self:GetSkill(def) then
             for _, sp in ipairs(def.spells) do
-                if self:KnowsSpell(sp) then out[#out + 1] = sp end
+                if self:KnowsSpell(sp) then
+                    -- the profession's own button uses the profession icon (lookup by name can return the wrong picture)
+                    if not sp.icon and sp.name == def.name then sp.icon = def.icon end
+                    out[#out + 1] = sp
+                end
             end
         end
     end
@@ -302,6 +306,7 @@ function PP:ActionSpells()
 end
 
 function PP:SpellIcon(sp)
+    if sp.icon then return sp.icon end
     local tex
     if C_Spell and C_Spell.GetSpellTexture then
         tex = safe(C_Spell.GetSpellTexture, sp.name) or (sp.id and safe(C_Spell.GetSpellTexture, sp.id))
