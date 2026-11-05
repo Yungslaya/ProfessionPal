@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.2.2 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.2.3 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -27,6 +27,16 @@ No account needed. Beta 1.2.2 · for WoW: Forever (interface 16001)
 - **Optional auto-learn.** At a trainer you opened, it learns the recipes the guide needs, up to a gold limit you set. Off until you turn it on.
 
 Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering, Enchanting, Cooking and First Aid.
+
+## What's new
+
+- **1.2.3:** Trainers and farm zones are now sorted by real travel time, using boats, the tram and zeppelins, not just map distance. In Auberdine, Journeyman Engineering now sends you to Stormwind by boat instead of Gadgetzan.
+- **1.2.2:** Map pins fixed for WoW Forever's Stormwind map.
+- **1.2.1:** New navy look that matches RestedXP.
+- **1.2.0:** Import any guide by pasting it in.
+- **1.1.2:** Reminders to learn new recipes, and a button for every profession.
+
+All versions: [Releases](https://github.com/Yungslaya/ProfessionPal/releases)
 
 ## Install (2 minutes)
 

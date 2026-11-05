@@ -146,6 +146,19 @@ end
 -- its own list plus every higher list. Names on both sides become Neutral.
 function PP.TrainerRanks(byRank)
     local out = {}
+    -- the highest rank each trainer is listed for (Artisan trainers live in far-off places)
+    local top = {}
+    for k = 1, 4 do
+        local set = byRank[k]
+        if set then
+            for _, side in ipairs({ set.A or {}, set.H or {} }) do
+                for _, r in ipairs(side) do
+                    local n = r.n or r[1]
+                    if n then top[n] = math.max(top[n] or 0, k) end
+                end
+            end
+        end
+    end
     for r = 1, 4 do
         local seenA, seenH, a, h = {}, {}, {}, {}
         for k = r, 4 do
@@ -159,6 +172,8 @@ function PP.TrainerRanks(byRank)
                 end
             end
         end
+        for _, t in ipairs(a) do t.top = top[t.n] end
+        for _, t in ipairs(h) do t.top = top[t.n] end
         if #a > 0 or #h > 0 then
             local res = { Alliance = {}, Horde = {}, Neutral = {} }
             for _, t in ipairs(a) do
@@ -417,6 +432,87 @@ function PP:Distance(map, x, y, me)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+-- ---------- travel time: boats, zeppelins, tram, and normal travel ----------
+-- Hubs are on Classic maps (Stormwind on the WoW Forever map). Times are rough minutes.
+-- NOT VERIFIED: WoW Forever's exact boat/portal list (Stormwind harbor <-> Auberdine assumed).
+local HUBS = {
+    sw_harbor   = { 1453, 22.0, 32.0, "Alliance" },  -- Stormwind harbor
+    sw_tram     = { 1453, 69.6, 31.4, "Alliance" },  -- Deeprun Tram, Stormwind side
+    if_tram     = { 1455, 76.4, 51.2, "Alliance" },  -- Deeprun Tram, Ironforge side
+    auberdine   = { 1439, 32.4, 44.0, "Alliance" },  -- Darkshore docks
+    ruttheran   = { 1438, 55.0, 94.0, "Alliance" },  -- Rut'theran Village (Darnassus boat)
+    menethil    = { 1437, 4.6, 57.0, "Alliance" },   -- Menethil Harbor (Wetlands)
+    theramore   = { 1445, 71.6, 56.0, "Alliance" },  -- Theramore docks
+    org_zep     = { 1411, 50.8, 13.6, "Horde" },     -- zeppelin tower outside Orgrimmar
+    tirisfal_zep= { 1420, 60.8, 58.8, "Horde" },     -- zeppelin tower by Undercity
+    gromgol     = { 1434, 31.6, 29.2, "Horde" },     -- Grom'gol zeppelin
+    ratchet     = { 1413, 63.6, 38.6, "both" },      -- Ratchet docks
+    bootybay    = { 1434, 25.8, 73.0, "both" },      -- Booty Bay docks
+}
+local LINKS = {   -- { hub, hub, minutes }
+    { "sw_harbor", "auberdine", 3 }, { "auberdine", "ruttheran", 2 }, { "auberdine", "menethil", 3 },
+    { "menethil", "theramore", 3 }, { "sw_tram", "if_tram", 1.5 },
+    { "org_zep", "tirisfal_zep", 3 }, { "org_zep", "gromgol", 3 }, { "tirisfal_zep", "gromgol", 3 },
+    { "ratchet", "bootybay", 3 },
+}
+local TRAVEL_SPEED = 20     -- yards per second, on foot + flight paths mixed
+local LEG_OVERHEAD = 20     -- seconds per leg (getting on, mounting up)
+
+local function overland(a, b)
+    if a[1] ~= b[1] then return nil end
+    local dx, dy = a[2] - b[2], a[3] - b[3]
+    return math.sqrt(dx * dx + dy * dy) / TRAVEL_SPEED + LEG_OVERHEAD
+end
+
+-- Seconds to get from you to a map point, using boats/zeppelins/tram for your faction.
+-- nil = the game won't tell us where you are (or where that place is).
+function PP:TravelTime(map, x, y, me)
+    me = me or { self:PlayerWorld() }
+    if not me[1] or not map then return nil end
+    local tc, tx, ty = WorldPos(map, (x or 50) / 100, (y or 50) / 100)
+    if not tc then return nil end
+    local fac = self:Faction()
+    -- nodes: 1 = you, 2 = target, then hubs you can use
+    local nodes = { { me[1], me[2], me[3] }, { tc, tx, ty } }
+    local index = {}
+    for name, h in pairs(HUBS) do
+        if h[4] == "both" or h[4] == fac then
+            local c, wx, wy = WorldPos(h[1], h[2] / 100, h[3] / 100)
+            if c then nodes[#nodes + 1] = { c, wx, wy }; index[name] = #nodes end
+        end
+    end
+    local n = #nodes
+    local extra = {}
+    for _, l in ipairs(LINKS) do
+        local a, b = index[l[1]], index[l[2]]
+        if a and b then
+            extra[a] = extra[a] or {}; extra[b] = extra[b] or {}
+            extra[a][b] = l[3] * 60; extra[b][a] = l[3] * 60
+        end
+    end
+    -- Dijkstra on a tiny graph
+    local best, done = {}, {}
+    best[1] = 0
+    for _ = 1, n do
+        local u, bu
+        for i = 1, n do
+            if not done[i] and best[i] and (not bu or best[i] < bu) then u, bu = i, best[i] end
+        end
+        if not u then break end
+        if u == 2 then return bu end
+        done[u] = true
+        for v = 1, n do
+            if not done[v] then
+                local w = overland(nodes[u], nodes[v])
+                local link = extra[u] and extra[u][v]
+                if link and (not w or link < w) then w = link end
+                if w and (not best[v] or bu + w < best[v]) then best[v] = bu + w end
+            end
+        end
+    end
+    return best[2]
+end
+
 function PP:CurrentZoneName()
     local z = safe(GetZoneText)
     if type(z) == "string" and z ~= "" then return z end
@@ -449,7 +545,7 @@ function PP:ZoneOptions(def, st)
     for i, z in ipairs(list) do
         z.order = i
         z.here = (here ~= nil and z.name == here)
-        z.dist = self:Distance(ZONE_MAP[z.name], 50, 50, me)
+        z.dist = self:TravelTime(ZONE_MAP[z.name], 50, 50, me)
     end
     table.sort(list, function(a, b)
         if a.here ~= b.here then return a.here end
@@ -494,7 +590,12 @@ function PP:TrainersFor(def, rankIndex)
     local list = PP.Join(set[fac], set.Neutral)
     local map = self:CurrentMap()
     local me = { self:PlayerWorld() }
-    for _, t in ipairs(list) do t.dist = self:Distance(t.m, t.x, t.y, me) end
+    -- quickest to reach first (boats, zeppelins, tram count). A trainer who is mainly there
+    -- for a higher rank (Gadgetzan, Hyjal, Booty Bay...) gets about 5 minutes added per rank.
+    for _, t in ipairs(list) do
+        t.dist = self:TravelTime(t.m, t.x, t.y, me)
+        if t.dist and t.top and t.top > rankIndex then t.dist = t.dist + (t.top - rankIndex) * 300 end
+    end
     table.sort(list, function(a, b)
         if a.dist and b.dist and a.dist ~= b.dist then return a.dist < b.dist end
         if (a.dist ~= nil) ~= (b.dist ~= nil) then return a.dist ~= nil end

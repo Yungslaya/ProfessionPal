@@ -82,6 +82,10 @@ local ART = {
     Alliance = {}, Horde = {},
     Neutral = { T(0, "Brikk Keencraft", "Booty Bay, Stranglethorn Vale", 1434, 29.0, 75.6) },
 }
+-- highest rank each trainer teaches (far-off Artisan trainers rank lower for easy ranks)
+for top, set in ipairs({ APP, JOUR, EXP, ART }) do
+    for _, side in pairs(set) do for _, t in ipairs(side) do t.top = top end end
+end
 local function Merge(...)
     local out = { Alliance = {}, Horde = {}, Neutral = {} }
     for i = 1, select("#", ...) do
