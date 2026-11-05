@@ -21,12 +21,32 @@ end
 
 local function SetColor(fs, color) fs:SetTextColor(unpack(color)) end
 
+-- Flat navy button with gold text (lighter when you point at it, gold edge when selected)
 local function Button(parent, label, w, h, onClick)
-    local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    local T = PP.THEME
+    local b = CreateFrame("Button", nil, parent, "BackdropTemplate")
     b:SetSize(w, h or 30)
+    PP.Skin(b, nil, { bg = T.btn, border = T.btnBorder })
+    local fs = Text(b, 15, C.gold, "CENTER")
+    fs:SetPoint("LEFT", b, "LEFT", 4, 0)
+    fs:SetPoint("RIGHT", b, "RIGHT", -4, 0)
+    b:SetFontString(fs)
     b:SetText(label)
-    local fs = b.GetFontString and b:GetFontString()
-    if fs then fs:SetFont(PP.FONT, 15, "") end
+    b.selected = false
+    local function paint(self, hover)
+        if not self.SetBackdropColor then return end
+        local fill = self.selected and T.btnSel or (hover and T.btnHover or T.btn)
+        self:SetBackdropColor(unpack(fill))
+        self:SetBackdropBorderColor(unpack(self.selected and T.selBorder or T.btnBorder))
+    end
+    b:SetScript("OnEnter", function(self) if self:IsEnabled() then paint(self, true) end end)
+    b:SetScript("OnLeave", function(self) paint(self, false) end)
+    b:SetScript("OnDisable", function(self) fs:SetTextColor(0.45, 0.47, 0.55); paint(self, false) end)
+    b:SetScript("OnEnable", function(self) fs:SetTextColor(unpack(self.textColor or C.gold)) end)
+    b:SetScript("OnMouseDown", function(self) if self:IsEnabled() then fs:SetPoint("LEFT", self, "LEFT", 5, -1) end end)
+    b:SetScript("OnMouseUp", function(self) fs:SetPoint("LEFT", self, "LEFT", 4, 0) end)
+    function b:SetSelected(on) self.selected = on and true or false; paint(self, false) end
+    function b:SetLabelColor(color) self.textColor = color; if self:IsEnabled() then fs:SetTextColor(unpack(color)) end end
     b:SetScript("OnClick", onClick)
     return b
 end
@@ -43,19 +63,12 @@ local function Window(name, w, title)
     f:SetSize(w, 300)
     f:SetFrameStrata("MEDIUM")
     f:SetClampedToScreen(true)
-    if f.SetBackdrop then
-        f:SetBackdrop({
-            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 32, edgeSize = 32,
-            insets = { left = 11, right = 12, top = 12, bottom = 11 },
-        })
-    end
+    PP.Skin(f, 40)
     f.title = Text(f, 18, C.gold, "CENTER")
-    f.title:SetPoint("TOP", f, "TOP", 0, -18)
+    f.title:SetPoint("TOP", f, "TOP", 0, -11)
     f.title:SetText(title)
     local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -6)
+    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -2)
     f:EnableMouse(true)
     f:SetMovable(true)
     f:RegisterForDrag("LeftButton")
@@ -306,11 +319,10 @@ function PP:Refresh()
         b:Show()
         b:SetText(b.skill and (b.def.name .. " " .. b.skill) or b.def.name)
         local fs = b.GetFontString and b:GetFontString()
-        if fs then
-            fs:SetFont(PP.FONT, (#b:GetText() > 10) and 13 or 15, "")
-            SetColor(fs, (b.def == def) and C.gold or C.white)
-        end
-        if b.def == def then b:LockHighlight() else b:UnlockHighlight() end
+        if fs then fs:SetFont(PP.FONT, (#b:GetText() > 10) and 13 or 15, "") end
+        -- selected tab: lighter fill, gold edge, gold text; others: white text
+        b:SetLabelColor((b.def == def) and C.gold or C.white)
+        b:SetSelected(b.def == def)
     end
     f.top = -46 - (math.floor((math.max(1, #shown) - 1) / 4) + 1) * 34 - 8
 

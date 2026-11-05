@@ -23,9 +23,50 @@ PP.C = {
     green  = { 0.20, 1.00, 0.20 },
     red    = { 1.00, 0.25, 0.25 },
     orange = { 1.00, 0.55, 0.15 },
-    gray   = { 0.70, 0.70, 0.70 },
-    yellow = { 1.00, 1.00, 0.55 },
+    gray   = { 0.74, 0.77, 0.86 },   -- soft blue-gray, reads well on navy
+    yellow = { 1.00, 0.86, 0.25 },   -- gold-yellow notes
 }
+
+-- ---------- look: dark navy panels, thin blue-gray border, lighter header strip ----------
+PP.THEME = {
+    bg        = { 0.086, 0.098, 0.180, 0.94 },  -- panel
+    band      = { 0.150, 0.170, 0.310, 1.00 },  -- header strip
+    border    = { 0.330, 0.370, 0.600, 1.00 },  -- thin edge
+    inset     = { 0.050, 0.060, 0.120, 0.90 },  -- boxes inside a panel
+    btn       = { 0.150, 0.170, 0.310, 1.00 },
+    btnHover  = { 0.230, 0.260, 0.450, 1.00 },
+    btnSel    = { 0.270, 0.300, 0.540, 1.00 },
+    btnBorder = { 0.400, 0.450, 0.700, 1.00 },
+    selBorder = { 1.000, 0.820, 0.000, 1.00 },  -- gold edge on the selected tab
+}
+local WHITE = "Interface\\Buttons\\WHITE8X8"
+
+-- Give a BackdropTemplate frame the navy look. bandHeight adds the lighter header strip.
+function PP.Skin(f, bandHeight, colors)
+    local T = PP.THEME
+    colors = colors or {}
+    if f.SetBackdrop then
+        f:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1,
+                        insets = { left = 1, right = 1, top = 1, bottom = 1 } })
+        f:SetBackdropColor(unpack(colors.bg or T.bg))
+        f:SetBackdropBorderColor(unpack(colors.border or T.border))
+    end
+    if bandHeight and not f.band then
+        local band = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+        band:SetTexture(WHITE)
+        band:SetVertexColor(unpack(T.band))
+        band:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+        band:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -1)
+        band:SetHeight(bandHeight)
+        local line = f:CreateTexture(nil, "BACKGROUND", nil, 2)
+        line:SetTexture(WHITE)
+        line:SetVertexColor(unpack(T.border))
+        line:SetPoint("TOPLEFT", band, "BOTTOMLEFT", 0, 0)
+        line:SetPoint("TOPRIGHT", band, "BOTTOMRIGHT", 0, 0)
+        line:SetHeight(1)
+        f.band, f.bandLine = band, line
+    end
+end
 
 local DEFAULTS = {
     selected = nil,       -- profession key shown in the window

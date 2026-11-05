@@ -51,14 +51,7 @@ function PP:BuildTracker()
     t:EnableMouse(true)
     t:RegisterForDrag("LeftButton")
     if t.RegisterForClicks then t:RegisterForClicks("LeftButtonUp") end
-    if t.SetBackdrop then
-        t:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8X8",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 14,
-            insets = { left = 3, right = 3, top = 3, bottom = 3 },
-        })
-    end
+    PP.Skin(t, 38)   -- navy panel with a lighter header strip behind the profession name
 
     local pt = self.db.trackerPoint
     if type(pt) == "table" and pt[1] then
@@ -136,9 +129,15 @@ function PP:ApplyTrackerLook()
     local t = self.tracker
     if not t then return end
     local a = self.db.trackerAlpha or 0.6
+    -- your "Background" setting sets how see-through the navy is; text stays solid
+    local T = PP.THEME
     if t.SetBackdropColor then
-        t:SetBackdropColor(0, 0, 0, a)
-        t:SetBackdropBorderColor(0.6, 0.6, 0.6, a)
+        t:SetBackdropColor(T.bg[1], T.bg[2], T.bg[3], a)
+        t:SetBackdropBorderColor(T.border[1], T.border[2], T.border[3], (a > 0) and math.max(a, 0.6) or 0)
+    end
+    if t.band then
+        t.band:SetVertexColor(T.band[1], T.band[2], T.band[3], (a > 0) and math.min(1, a + 0.15) or 0)
+        t.bandLine:SetVertexColor(T.border[1], T.border[2], T.border[3], (a > 0) and math.max(a, 0.6) or 0)
     end
     self:ApplyTrackerAlpha()
     if not self:InCombat() then t:SetScale(self.db.trackerScale or 1) end
@@ -176,7 +175,7 @@ function PP:RefreshTracker()
 
     local skill, max = self:GetSkill(def)
     t.icon:SetTexture(def.icon)
-    t.icon:ClearAllPoints(); t.icon:SetPoint("TOPLEFT", t, "TOPLEFT", 10, -8)
+    t.icon:ClearAllPoints(); t.icon:SetPoint("TOPLEFT", t, "TOPLEFT", 10, -5)
     t.head:SetText(def.name .. "   " .. (skill and (skill .. " / " .. (max or "?")) or "not learned"))
     t.head:ClearAllPoints(); t.head:SetPoint("LEFT", t.icon, "RIGHT", 8, 0); t.head:Show()
     local y = -42

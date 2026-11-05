@@ -358,20 +358,15 @@ function PP:BuildGuides()
     g:SetPoint("CENTER", UIParent, "CENTER", 0, 30)
     g:SetFrameStrata("DIALOG")
     g:SetClampedToScreen(true)
-    if g.SetBackdrop then
-        g:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-                        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-                        tile = true, tileSize = 32, edgeSize = 32,
-                        insets = { left = 11, right = 12, top = 12, bottom = 11 } })
-    end
+    PP.Skin(g, 40)
     g:EnableMouse(true); g:SetMovable(true); g:RegisterForDrag("LeftButton")
     g:SetScript("OnDragStart", g.StartMoving); g:SetScript("OnDragStop", g.StopMovingOrSizing)
     g:Hide()
     if UISpecialFrames then table.insert(UISpecialFrames, "ProfessionPalGuides") end
     local close = CreateFrame("Button", nil, g, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", g, "TOPRIGHT", -6, -6)
+    close:SetPoint("TOPRIGHT", g, "TOPRIGHT", -2, -2)
 
-    g.title = Text(g, 18, C.gold, "CENTER"); g.title:SetPoint("TOP", g, "TOP", 0, -18)
+    g.title = Text(g, 18, C.gold, "CENTER"); g.title:SetPoint("TOP", g, "TOP", 0, -11)
     g.using = Text(g, 15, C.white); g.using:SetWidth(500); g.using:SetPoint("TOPLEFT", g, "TOPLEFT", 30, -48)
 
     g.useDefault = Button(g, "Use ProfessionPal guide", 220, 30, function() PP:SetGuide(false) end)
@@ -392,11 +387,7 @@ function PP:BuildGuides()
     local box = CreateFrame("Frame", nil, g, "BackdropTemplate")
     box:SetSize(500, 150)
     box:SetPoint("TOPLEFT", g, "TOPLEFT", 28, -262)
-    if box.SetBackdrop then
-        box:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-                          edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
-        box:SetBackdropColor(0, 0, 0, 0.8)
-    end
+    PP.Skin(box, nil, { bg = PP.THEME.inset })
     local ok, sf = pcall(CreateFrame, "ScrollFrame", "ProfessionPalGuidesScroll", box, "UIPanelScrollFrameTemplate")
     if not ok then sf = CreateFrame("ScrollFrame", "ProfessionPalGuidesScroll", box) end
     sf:SetPoint("TOPLEFT", box, "TOPLEFT", 8, -8)
