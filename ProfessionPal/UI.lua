@@ -246,6 +246,8 @@ function PP:BuildUI()
 
     f.shopBtn = Button(f, "Shopping List", 150, 32, function() PP:ToggleShop() end)
     f.setBtn = Button(f, "Settings", 120, 32, function() PP:ToggleSettings() end)
+    f.guideBtn = Button(f, "Guides", 120, 32, function() PP:ToggleGuides() end)
+    f.guideLine = Text(f, 13, C.green); f.guideLine:SetWidth(TEXTW)
 
     self:BuildShop()
     if self.BuildTracker then self:BuildTracker() end
@@ -255,7 +257,7 @@ end
 local function HideAll(f)
     for _, k in ipairs({ "headIcon", "headName", "headSkill", "alert", "secNext", "stepIcon", "stepText",
                          "stepSub", "whereHead", "zoneTip", "tool", "tip", "vendorHead", "vendor",
-                         "secTrain", "trainText", "gearHead", "gearNext", "gearBtn", "learn" }) do
+                         "secTrain", "trainText", "gearHead", "gearNext", "gearBtn", "learn", "guideLine" }) do
         if f[k] then f[k]:Hide() end
     end
     for _, r in ipairs(f.gear or {}) do r:Hide() end
@@ -329,6 +331,14 @@ function PP:Refresh()
     end
     f.headSkill:ClearAllPoints(); f.headSkill:SetPoint("TOPLEFT", f.headName, "BOTTOMLEFT", 0, -4); f.headSkill:Show()
     P.y = P.y - 56
+    local imported = self.ImportedGuide and self:ImportedGuide(def)
+    if imported then
+        local st = skill and self:StepFor(def, skill)
+        local t = "Guide: " .. imported.title
+        if st and not st.imported then t = t .. "  (it stops before your skill, so this is the ProfessionPal step)" end
+        f.guideLine:SetText(t)
+        P:Put(f.guideLine, P:TextH(f.guideLine, 15), 24, 4)
+    end
 
     local cur, nxt, ni = self:RankInfo(def, skill, max)
     local lvl = self:PlayerLevel()
@@ -358,7 +368,7 @@ function PP:Refresh()
             f.stepText:SetText(st.text .. "  x " .. n)
             iconItem = st.mats[1][1]
         else
-            f.stepText:SetText("Make " .. n .. "  x  " .. st.text)
+            f.stepText:SetText((n > 0) and ("Make " .. n .. "  x  " .. st.text) or ("Make:  " .. st.text))
             iconItem = st.mats and st.mats[1] and st.mats[1][1]
         end
         local sub = "Until skill " .. st.to
@@ -543,6 +553,7 @@ function PP:Refresh()
     P.y = P.y - 6
     f.shopBtn:ClearAllPoints(); f.shopBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 24, P.y)
     f.setBtn:ClearAllPoints(); f.setBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y)
+    f.guideBtn:ClearAllPoints(); f.guideBtn:SetPoint("TOP", f, "TOP", 10, P.y)
     f:SetHeight(-P.y + 54)
 end
 

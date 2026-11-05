@@ -45,6 +45,8 @@ local DEFAULTS = {
     showAll = false,       -- show every profession tab, not only the ones you know
     autoLearn = false,     -- learn guide recipes when a trainer window is open (OFF by default)
     autoLearnMax = 10,     -- spending limit per trainer visit, in gold
+    guides = {},           -- imported guides: [profession key] = { title, steps, kind }
+    useGuide = {},         -- [profession key] = true : follow the imported guide
 }
 
 -- ---------- small safe helpers ----------
@@ -469,6 +471,13 @@ end
 
 function PP:StepFor(def, skill)
     skill = skill or 0
+    -- an imported guide comes first; where it has no step, the ProfessionPal guide fills in
+    local g = self.ImportedGuide and self:ImportedGuide(def)
+    if g then
+        for _, st in ipairs(g.steps) do
+            if skill >= st.from and skill < st.to then return st end
+        end
+    end
     if self:UsingAlt(def, skill) then
         for _, st in ipairs(def.altSteps.steps) do
             if skill >= st.from and skill < st.to then return st end

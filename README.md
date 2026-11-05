@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.1.2 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.2.0 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -23,6 +23,7 @@ No account needed. Beta 1.1.2 · for WoW: Forever (interface 16001)
 - **Shopping list** for everything until your next training.
 - **Gear For You.** Ranks the gear your profession can craft for your class and role, slot by slot, against what you're wearing right now.
 - **On-screen tracker.** A small guide box that stays up, with one-click Find Minerals, Find Herbs and Smelting buttons. See-through, movable, hides in combat.
+- **Import any guide.** Copy a guide page in your browser (Ctrl+A, Ctrl+C), click **Guides**, paste it. ProfessionPal turns it into its own step-by-step view with the same have/need counts, trainers and tracker. Share it with friends as text, or switch back to the built-in guide any time.
 - **Optional auto-learn.** At a trainer you opened, it learns the recipes the guide needs, up to a gold limit you set. Off until you turn it on.
 
 Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering, Enchanting, Cooking and First Aid.

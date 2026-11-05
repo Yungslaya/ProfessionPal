@@ -194,7 +194,7 @@ function PP:RefreshTracker()
             elseif st.smelt then
                 t.step:SetText(st.text .. "  x " .. n)
             else
-                t.step:SetText("Make " .. n .. " x " .. st.text)
+                t.step:SetText((n > 0) and ("Make " .. n .. " x " .. st.text) or ("Make: " .. st.text))
             end
             t.step:SetTextColor(unpack(C.white))
             y = Put(t, t.step, H(t.step, 18) + 2, y)

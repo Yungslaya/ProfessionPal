@@ -2,7 +2,7 @@
 ## Title: ProfessionPal
 ## Notes: Simple profession leveling guide for all professions. Type /prof
 ## Author: ProfessionPal
-## Version: 1.1.2
+## Version: 1.2.0
 ## SavedVariables: ProfessionPalDB
 ## OptionalDeps: TomTom
 ## IconTexture: Interface\Icons\Trade_Mining
@@ -27,3 +27,4 @@ Gear.lua
 UI.lua
 Tracker.lua
 AutoLearn.lua
+Import.lua

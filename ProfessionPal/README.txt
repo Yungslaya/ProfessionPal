@@ -1,4 +1,4 @@
-ProfessionPal 1.1.2 (beta)  -  a profession leveling guide for WoW: Forever
+ProfessionPal 1.2.0 (beta)  -  a profession leveling guide for WoW: Forever
 ==========================================================================
 
 Every profession, skill 1 to 300, inside the game. Type /prof.
@@ -15,6 +15,9 @@ WHAT IT DOES
   slot by slot, compared to what you are wearing.
 - On-screen tracker box (like a leveling guide) that stays up,
   with one-click Find Minerals / Find Herbs / Smelting buttons.
+- Import any guide: copy a guide page in your browser (Ctrl+A, Ctrl+C),
+  click Guides, paste it (Ctrl+V). ProfessionPal follows that guide instead.
+  Share it with friends as text. Switch back any time.
 - Covers all 12 professions: Mining, Herbalism, Skinning, Fishing,
   Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering,
   Enchanting, Cooking, First Aid.
