@@ -8,7 +8,7 @@ local _, PP = ...
 
 local TRAINERS = {
     A = {
-        { "Shaina Fuller", "Cathedral of Light, Stormwind City", 1453, 42.8, 26.6 },
+        { "Shaina Fuller", "Cathedral of Light, Stormwind City", 1453, 52.8, 44.8 },
         { "Nissa Firestone", "Great Forge, Ironforge", 1455, 54.8, 58.6 },
         { "Dannelor", "Craftsmen's Terrace, Darnassus", 1457, 51.6, 12.6 },
         { "Michelle Belle", "Goldshire, Elwynn Forest", 1429, 43.4, 65.6 },

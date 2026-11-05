@@ -41,7 +41,7 @@ local APP_H = {
     T(52, "Walter Mason", "Deathknell, Tirisfal Glades", 1420, 32.2, 65.6, true),
 }
 local FULL_A = {
-    T(1, "Gelman Stonehand", "Dwarven District, Stormwind City", 1453, 51.0, 17.2),
+    T(1, "Gelman Stonehand", "Dwarven District, Stormwind City", 1453, 59.2, 37.5),
     T(2, "Geofram Bouldertoe", "The Great Forge, Ironforge", 1455, 50.2, 26.0),
     T(3, "Yarr Hammerstone", "Steelgrill's Depot, Dun Morogh", 1426, 50.0, 50.4),
     T(4, "Dank Drizzlecut", "Gol'Bolar Quarry, Dun Morogh", 1426, 69.2, 55.4),

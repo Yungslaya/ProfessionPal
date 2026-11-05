@@ -21,7 +21,7 @@ PP:AddProfession{
     trainers = PP.TrainerRanks({
         [1] = {
             A = {
-                { "Sprite Jumpsprocket", "Dwarven District, Stormwind City", 1453, 61.8, 30.8 },
+                { "Sprite Jumpsprocket", "Dwarven District, Stormwind City", 1453, 67.6, 48.1 },
                 { "Jemma Quikswitch", "Tinker Town, Ironforge", 1455, 67.8, 43.8 },
                 { "Bronk Guzzlegear", "Steelgrill's Depot, Dun Morogh", 1426, 50.2, 50.4 },
                 { "Deek Fizzlebizz", "Stonewrought Dam, Loch Modan", 1432, 45.8, 13.6 },
@@ -40,7 +40,7 @@ PP:AddProfession{
         },
         [2] = {
             A = {
-                { "Lilliam Sparkspindle", "Dwarven District, Stormwind City", 1453, 62.2, 30.4 },
+                { "Lilliam Sparkspindle", "Dwarven District, Stormwind City", 1453, 67.9, 47.8 },
                 { "Trixie Quikswitch", "Tinker Town, Ironforge", 1455, 67.8, 43.2 },
                 { "Finbus Geargrind", "Darkshire, Duskwood", 1431, 77.4, 48.4 },
             },

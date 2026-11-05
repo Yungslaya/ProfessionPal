@@ -38,7 +38,7 @@ end
 -- Trainers (Icy Veins). Each list = trainers whose HIGHEST rank is that one.
 local APP = {
     Alliance = {
-        T(10, "Dane Lindgren", "Dwarven District, Stormwind City", 1453, 64.1, 37.0),
+        T(10, "Dane Lindgren", "Dwarven District, Stormwind City", 1453, 69.4, 52.9),
         T(11, "Groum Stonebeard", "The Great Forge, Ironforge", 1455, 52.3, 41.9),
         T(12, "Smith Argus", "Goldshire, Elwynn Forest", 1429, 41.7, 65.5),
         T(13, "Tognus Flintfire", "Kharanos, Dun Morogh", 1426, 45.3, 51.9),
@@ -57,7 +57,7 @@ local APP = {
 }
 local JOUR = {
     Alliance = {
-        T(5, "Therum Deepforge", "Dwarven District, Stormwind City", 1453, 63.7, 37.0),
+        T(5, "Therum Deepforge", "Dwarven District, Stormwind City", 1453, 69.1, 52.9),
         T(6, "Rotgath Stonebeard", "The Great Forge, Ironforge", 1455, 52.4, 42.6),
         T(7, "Clarise Gnarltree", "Darkshire, Duskwood", 1431, 74.0, 48.5),
     },

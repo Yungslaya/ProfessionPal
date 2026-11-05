@@ -8,14 +8,14 @@ local _, PP = ...
 
 local FULL = {
     A = {
-        { "Tannysa", "Mage Quarter, Stormwind City", 1453, 44.8, 77 },
-        { "Shylamiir", "The Park, Stormwind City", 1453, 15.2, 49.8 },
+        { "Tannysa", "Mage Quarter, Stormwind City", 1453, 54.4, 84.1 },
+        { "Shylamiir", "The Park, Stormwind City", 1453, 31.3, 62.9 },
         { "Reyna Stonebranch", "The Great Forge, Ironforge", 1455, 55.6, 58.4 },
         { "Firodren Mooncaller", "Temple Gardens, Darnassus", 1457, 48, 68.4 },
         { "Malorne Bladeleaf", "Dolanaar, Teldrassil", 1438, 57.6, 60.6 },
         { "Herbalist Pomeroy", "Stormwind gates, Elwynn Forest", 1429, 39.8, 48.4 },
         { "Kali Healtouch", "Thelsamar, Loch Modan", 1432, 36.6, 48.4 },
-        { "Alma Jainrose", "Lakeshire, Redridge Mountains", 1433, 21.8, 45.8 },
+        { "Alma Jainrose", "Lakeshire, Redridge Mountains", 1433, 16.4, 45.7 },
         { "Cylania Rootstalker", "Silverwind Refuge, Ashenvale", 1440, 50.6, 67 },
         { "Telurinon Moonshadow", "Menethil Harbor, Wetlands", 1437, 8, 55.8 },
         { "Brant Jasperbloom", "Theramore Isle, Dustwallow Marsh", 1445, 64, 47.6 },

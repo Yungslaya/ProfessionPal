@@ -8,7 +8,7 @@ local _, PP = ...
 
 local COOKS = {
     A = {
-        { "Stephen Ryback", "Old Town, Stormwind City", 1453, 78.2, 53 },
+        { "Stephen Ryback", "Old Town, Stormwind City", 1453, 80.4, 65.4 },
         { "Daryl Riknussun", "The Great Forge, Ironforge", 1455, 60.4, 38 },
         { "Alegorn", "Craftsmen's Terrace, Darnassus", 1457, 49.8, 21 },
         { "Tomas", "Goldshire, Elwynn Forest", 1429, 44.2, 66 },

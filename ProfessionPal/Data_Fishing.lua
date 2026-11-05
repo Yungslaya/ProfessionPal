@@ -8,7 +8,7 @@ local _, PP = ...
 
 local TRAINERS = {
     A = {
-        { "Arnold Leland", "Canal by the Trade District, Stormwind City", 1453, 55, 69.6 },
+        { "Arnold Leland", "Canal by the Trade District, Stormwind City", 1453, 45.4, 57.6 },
         { "Grimnur Stonebrand", "Forlorn Cavern, Ironforge", 1455, 48.4, 6.4 },
         { "Astaia", "Temple Gardens, Darnassus", 1457, 47.6, 56.6 },
         { "Lee Brown", "Goldshire, Elwynn Forest", 1429, 47.6, 62.2 },

@@ -20,7 +20,7 @@ PP:AddProfession{
     trainers = PP.TrainerRanks({
         [1] = {
             A = {
-                { "Randal Worth", "Old Town, Stormwind City", 1453, 67.4, 49.4 },
+                { "Randal Worth", "Old Town, Stormwind City", 1453, 72, 62.6 },
                 { "Gretta Finespindle", "The Great Forge, Ironforge", 1455, 39, 32.4 },
                 { "Darianna", "Craftsmen's Terrace, Darnassus", 1457, 64.4, 21.2 },
                 { "Adele Fielder", "Goldshire, Elwynn Forest", 1429, 46.4, 62.2 },
@@ -41,7 +41,7 @@ PP:AddProfession{
         },
         [2] = {
             A = {
-                { "Simon Tanner", "Old Town, Stormwind City", 1453, 67.2, 49.4 },
+                { "Simon Tanner", "Old Town, Stormwind City", 1453, 71.8, 62.6 },
                 { "Fimble Finespindle", "The Great Forge, Ironforge", 1455, 39.4, 33 },
                 { "Faldron", "Craftsmen's Terrace, Darnassus", 1457, 64.4, 21.4 },
                 { "Aayndia Floralwind", "Astranaar, Ashenvale", 1440, 35.8, 52 },

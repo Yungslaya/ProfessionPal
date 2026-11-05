@@ -4,7 +4,8 @@
       https://www.icy-veins.com/wow-forever/alchemy-leveling-guide
     Wowhead Forever Alchemy Leveling Guide 1-300 -> 225-300 steps (not tested live yet)
       https://www.wowhead.com/forever/profession-leveling-guides/alchemy
-  NOT VERIFIED: Zephras Isle map ID (Icy Veins lists 2991 here, 2521 on other pages).
+  Zephras Isle map ID fixed to 2521 (Icy Veins printed 2991 on this page; Wowhead Forever uses 2521).
+  Stormwind trainers moved to WoW Forever's (modern) Stormwind map coordinates.
   Trainer row: { name, place, mapID, x, y }
 ]]
 local _, PP = ...
@@ -22,15 +23,15 @@ PP:AddProfession{
     trainers = PP.TrainerRanks({
         [1] = {
             A = {
-                { "Tel'Athir", "Mage Quarter, Stormwind City", 1453, 55.5, 85.6 },
+                { "Tel'Athir", "Mage Quarter, Stormwind City", 1453, 62.7, 90.8 },
                 { "Vosur Brakthel", "Tinker Town, Ironforge", 1455, 66.3, 55.7 },
                 { "Milla Fairancora", "Craftsmen's Terrace, Darnassus", 1457, 55.4, 22.7 },
                 { "Cyndra Kindwhisper", "Dolanaar, Teldrassil", 1438, 57.6, 60.6 },
                 { "Alchemist Mallory", "Hills between Stormwind and Northshire, Elwynn Forest", 1429, 39.8, 48.6 },
                 { "Ghak Healtouch", "Thelsamar, Loch Modan", 1432, 37.1, 49.4 },
-                { "Iaadaria Bitterwind", "Valanaar, Zephras Isle", 2991, 66.2, 79.6 },
-                { "Nyassa Swiftdraught", "Shen'dar Village, Zephras Isle", 2991, 43.8, 43.6 },
-                { "Valiena Swiftgale", "Valanaar, Zephras Isle", 2991, 59.2, 76.2 },
+                { "Iaadaria Bitterwind", "Valanaar, Zephras Isle", 2521, 66.2, 79.6 },
+                { "Nyassa Swiftdraught", "Shen'dar Village, Zephras Isle", 2521, 43.8, 43.6 },
+                { "Valiena Swiftgale", "Valanaar, Zephras Isle", 2521, 59.2, 76.2 },
             },
             H = {
                 { "Whuut", "The Drag, Orgrimmar", 1454, 55.8, 32.9 },
@@ -38,13 +39,13 @@ PP:AddProfession{
                 { "Kray", "Middle Rise, Thunder Bluff", 1456, 47, 34.6 },
                 { "Carolai Anise", "Brill, Tirisfal Glades", 1420, 59.4, 52.2 },
                 { "Miao'zan", "Sen'jin Village, Durotar", 1411, 55.4, 74 },
-                { "Nyassa Swiftdraught", "Shen'dar Village, Zephras Isle", 2991, 43.8, 43.6 },
-                { "Valiena Swiftgale", "Valanaar, Zephras Isle", 2991, 59.2, 76.2 },
+                { "Nyassa Swiftdraught", "Shen'dar Village, Zephras Isle", 2521, 43.8, 43.6 },
+                { "Valiena Swiftgale", "Valanaar, Zephras Isle", 2521, 59.2, 76.2 },
             },
         },
         [2] = {
             A = {
-                { "Lilyssia Nightbreeze", "Mage Quarter, Stormwind City", 1453, 55.7, 86.1 },
+                { "Lilyssia Nightbreeze", "Mage Quarter, Stormwind City", 1453, 62.9, 91.2 },
                 { "Sylvanna Forestmoon", "Craftsmen's Terrace, Darnassus", 1457, 56.4, 24.2 },
                 { "Tally Berryfizz", "Tinker Town, Ironforge", 1455, 67.2, 54.2 },
                 { "Alchemist Narett", "Theramore Isle, Dustwallow Marsh", 1445, 64, 47.7 },

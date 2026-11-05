@@ -21,7 +21,7 @@ PP:AddProfession{
     trainers = PP.TrainerRanks({
         [1] = {
             A = {
-                { "Betty Quin", "Mage Quarter, Stormwind City", 1453, 43.2, 63.8 },
+                { "Betty Quin", "Mage Quarter, Stormwind City", 1453, 53, 73.8 },
                 { "Thonys Pillarstone", "The Great Forge, Ironforge", 1455, 60.6, 44.2 },
                 { "Lalina Summermoon", "Craftsmen's Terrace, Darnassus", 1457, 59.6, 12.6 },
                 { "Alanna Raveneye", "Oracle Glade, Teldrassil", 1438, 36.8, 34.2 },
@@ -40,7 +40,7 @@ PP:AddProfession{
         },
         [2] = {
             A = {
-                { "Lucan Cordell", "Mage Quarter, Stormwind City", 1453, 43, 64.4 },
+                { "Lucan Cordell", "Mage Quarter, Stormwind City", 1453, 53, 74.3 },
                 { "Gimble Thistlefuzz", "The Great Forge, Ironforge", 1455, 60, 45.4 },
                 { "Taladan", "Craftsmen's Terrace, Darnassus", 1457, 58.6, 13.6 },
                 { "Xylinnia Starshine", "Feathermoon Stronghold, Feralas", 1444, 31.6, 44.2 },

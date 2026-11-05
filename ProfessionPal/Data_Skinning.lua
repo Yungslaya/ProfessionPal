@@ -8,7 +8,7 @@ local _, PP = ...
 
 local FULL = {
     A = {
-        { "Maris Granger", "Old Town, Stormwind City", 1453, 67.8, 49 },
+        { "Maris Granger", "Old Town, Stormwind City", 1453, 72.3, 62.3 },
         { "Balthus Stoneflayer", "The Great Forge, Ironforge", 1455, 39.6, 32.6 },
         { "Eladriel", "Craftsmen's Terrace, Darnassus", 1457, 64.2, 21.8 },
         { "Helene Peltskinner", "Goldshire, Elwynn Forest", 1429, 46.2, 62.2 },

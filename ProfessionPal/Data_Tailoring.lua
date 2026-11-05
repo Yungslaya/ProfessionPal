@@ -21,7 +21,7 @@ PP:AddProfession{
     trainers = PP.TrainerRanks({
         [1] = {
             A = {
-                { "Lawrence Schneider", "Mage Quarter, Stormwind City", 1453, 43.6, 73.8 },
+                { "Lawrence Schneider", "Mage Quarter, Stormwind City", 1453, 53.4, 81.6 },
                 { "Uthrar Threx", "The Great Forge, Ironforge", 1455, 43.6, 28.2 },
                 { "Trianna", "Craftsmen's Terrace, Darnassus", 1457, 63.6, 21.6 },
                 { "Eldrin", "Eastvale Logging Camp, Elwynn Forest", 1429, 79.2, 69 },
@@ -37,7 +37,7 @@ PP:AddProfession{
         },
         [2] = {
             A = {
-                { "Sellandus", "Mage Quarter, Stormwind City", 1453, 42, 76.2 },
+                { "Sellandus", "Mage Quarter, Stormwind City", 1453, 52.2, 83.5 },
                 { "Jormund Stonebrow", "The Great Forge, Ironforge", 1455, 43.6, 28.2 },
                 { "Me'lynn", "Craftsmen's Terrace, Darnassus", 1457, 62.6, 22.6 },
                 { "Grarnik Goodstitch", "Booty Bay, Stranglethorn Vale", 1434, 28.6, 76.8 },
@@ -56,7 +56,7 @@ PP:AddProfession{
         },
         [3] = {
             A = {
-                { "Georgio Bolero", "Mage Quarter, Stormwind City", 1453, 43.2, 73.6 },
+                { "Georgio Bolero", "Mage Quarter, Stormwind City", 1453, 53.1, 81.4 },
                 { "Charles Worth", "Dalaran, Alterac Mountains", 1416, 17.8, 60.6 },
             },
             H = { { "Josef Gregorian", "Magic Quarter, Undercity", 1458, 70.6, 30.6 } },

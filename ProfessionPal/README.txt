@@ -1,4 +1,4 @@
-ProfessionPal 1.2.1 (beta)  -  a profession leveling guide for WoW: Forever
+ProfessionPal 1.2.2 (beta)  -  a profession leveling guide for WoW: Forever
 ==========================================================================
 
 Every profession, skill 1 to 300, inside the game. Type /prof.
