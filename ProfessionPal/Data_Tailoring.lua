@@ -10,6 +10,8 @@ local _, PP = ...
 
 PP:AddProfession{
     key = "tailoring", name = "Tailoring", skillLine = 197, icon = "Interface\\Icons\\Trade_Tailoring",
+    -- tracker buttons (one click = one cast, like an action bar)
+    spells = { { name = "Tailoring" } },
     ranks = {
         { name = "Apprentice", cap = 75, skill = 0, level = 0 },
         { name = "Journeyman", cap = 150, skill = 50, level = 10 },

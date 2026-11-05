@@ -218,6 +218,7 @@ function PP:BuildUI()
     f.zoneTip = Text(f, 14, C.gray); f.zoneTip:SetWidth(TEXTW - 16)
     f.tool = Text(f, 15, C.red); f.tool:SetWidth(TEXTW)
     f.tip = Text(f, 14, C.yellow); f.tip:SetWidth(TEXTW)
+    f.learn = Text(f, 16, C.orange); f.learn:SetWidth(TEXTW)
 
     f.vendorHead = Text(f, 15, C.gold); f.vendorHead:SetText("Plans from:")
     f.vendor = PersonRow(f)
@@ -254,7 +255,7 @@ end
 local function HideAll(f)
     for _, k in ipairs({ "headIcon", "headName", "headSkill", "alert", "secNext", "stepIcon", "stepText",
                          "stepSub", "whereHead", "zoneTip", "tool", "tip", "vendorHead", "vendor",
-                         "secTrain", "trainText", "gearHead", "gearNext", "gearBtn" }) do
+                         "secTrain", "trainText", "gearHead", "gearNext", "gearBtn", "learn" }) do
         if f[k] then f[k]:Hide() end
     end
     for _, r in ipairs(f.gear or {}) do r:Hide() end
@@ -344,6 +345,7 @@ function PP:Refresh()
 
     -- next step
     local st = self:StepFor(def, skill or 1)
+    local recipeNeed
     if st and not (skill and skill >= 300) then
         P:Put(f.secNext, 18, 24, 4)
         local s = skill or 1
@@ -369,6 +371,17 @@ function PP:Refresh()
         f.stepSub:ClearAllPoints(); f.stepSub:SetPoint("TOPLEFT", f.stepText, "BOTTOMLEFT", 0, -4); f.stepSub:Show()
         local th = P:TextH(f.stepText, 20) + P:TextH(f.stepSub, 16) + 8
         P.y = P.y - math.max(48, th) - 6
+
+        -- a new recipe this step needs (e.g. Heavy Linen Bandage at First Aid 40)
+        recipeNeed = self:RecipeToLearn(def, st, skill)
+        if recipeNeed then
+            if recipeNeed.sure then
+                f.learn:SetText("LEARN FIRST:  " .. self:RecipeText(def, recipeNeed))
+            else
+                f.learn:SetText("New recipe:  " .. self:RecipeText(def, recipeNeed) .. " (if you don't have it yet)")
+            end
+            P:Put(f.learn, P:TextH(f.learn, 18), 24, 6)
+        end
 
         -- materials you need, or the veins you mine
         local i = 0
@@ -505,11 +518,20 @@ function PP:Refresh()
         f.trainText:SetText("No more training. Max skill is 300.")
         SetColor(f.trainText, C.gray)
     end
+    -- a trainer recipe to learn wins over "Next: ... at skill X"
+    local trainerRank = ni
+    if recipeNeed and recipeNeed.src == "trainer" and skill and not (nxt and skill >= nxt.skill) then
+        f.secTrain:SetText("TRAINER")
+        f.trainText:SetText("LEARN:  " .. recipeNeed.name)
+        SetColor(f.trainText, C.orange)
+        showTrainers = true
+        trainerRank = math.max(1, cur or 1)
+    end
     P.y = P.y - 4
     P:Put(f.secTrain, 18, 24, 4)
     P:Put(f.trainText, P:TextH(f.trainText, 18), 24, 6)
     if showTrainers then
-        local list = self:TrainersFor(def, ni)
+        local list = self:TrainersFor(def, trainerRank)
         for k = 1, math.min(2, #list) do
             local t = list[k]
             f.trainers[k]:SetWho(t, t.junior and (def.key == "mining" and "  (no smelting)" or "  (Apprentice only)") or nil)

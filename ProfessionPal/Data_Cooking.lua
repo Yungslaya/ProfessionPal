@@ -39,6 +39,8 @@ local COOKS = {
 
 PP:AddProfession{
     key = "cooking", name = "Cooking", skillLine = 185, icon = "Interface\\Icons\\INV_Misc_Food_15",
+    -- tracker buttons (one click = one cast, like an action bar)
+    spells = { { name = "Cooking" }, { name = "Basic Campfire", id = 818 } },
     ranks = {
         { name = "Apprentice", cap = 75, skill = 0, level = 0 },
         { name = "Journeyman", cap = 150, skill = 50, level = 0 },

@@ -33,6 +33,8 @@ local TRAINERS = {
 
 PP:AddProfession{
     key = "firstaid", name = "First Aid", skillLine = 129, icon = "Interface\\Icons\\Spell_Holy_SealOfSacrifice",
+    -- tracker buttons (one click = one cast, like an action bar)
+    spells = { { name = "First Aid" } },
     ranks = {
         { name = "Apprentice", cap = 75, skill = 0, level = 0 },
         { name = "Journeyman", cap = 150, skill = 50, level = 0 },

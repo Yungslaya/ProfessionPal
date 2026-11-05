@@ -255,6 +255,52 @@ function PP:InCombat()
     return safe(InCombatLockdown) and true or false
 end
 
+-- ---------- new recipes: "learn this first" ----------
+-- The step's recipe as { id, at, src, name }, or nil if we don't know it
+function PP:StepRecipe(def, st)
+    local list = PP.Recipes and PP.Recipes[def.key]
+    if not (list and st and st.text) then return nil end
+    local r = list[st.text]
+    if not r then return nil end
+    return { id = r[1], at = r[2], src = r[3], name = st.text }
+end
+
+local function SpellKnown(id)
+    if IsPlayerSpell and safe(IsPlayerSpell, id) then return true end
+    if C_SpellBook and C_SpellBook.IsSpellKnown and safe(C_SpellBook.IsSpellKnown, id) then return true end
+    return false
+end
+
+-- true / false, or nil when the game can't tell us (then we only give a gentle reminder)
+function PP:KnowsRecipe(def, rec)
+    if not (IsPlayerSpell or (C_SpellBook and C_SpellBook.IsSpellKnown)) then return nil end
+    -- trust check: the recipe everyone starts with must show as known
+    local starter
+    for _, r in pairs(PP.Recipes[def.key] or {}) do
+        if r[3] == "start" and (not starter or r[2] < starter[2]) then starter = r end
+    end
+    if starter and not SpellKnown(starter[1]) then return nil end
+    return SpellKnown(rec.id)
+end
+
+-- The recipe you still need for this step, or nil. rec.sure = we know you don't have it.
+function PP:RecipeToLearn(def, st, skill)
+    if not skill then return nil end
+    local rec = self:StepRecipe(def, st)
+    if not rec or rec.src == "start" or skill < rec.at then return nil end
+    local k = self:KnowsRecipe(def, rec)
+    if k == true then return nil end
+    rec.sure = (k == false)
+    -- can't tell: remind only during the first few points of the step
+    if k == nil and skill > (st.from or 0) + 3 then return nil end
+    return rec
+end
+
+function PP:RecipeText(def, rec)
+    if rec.src == "vendor" then return "Buy the recipe: " .. rec.name end
+    return "Learn " .. rec.name .. " at your " .. def.name .. " trainer"
+end
+
 -- ---------- where you are: distances, closest first ----------
 -- Classic zone map IDs, so we can measure how far a zone is from you.
 local ZONE_MAP = {
@@ -523,6 +569,15 @@ function PP:CheckTraining()
                 if not self.db.told[k] and self:PlayerLevel() >= (nxt.level or 0) then
                     self.db.told[k] = true
                     self:Print("Time to train |cffff8c26" .. nxt.name .. " " .. def.name .. "|r. Type /prof")
+                end
+            end
+            -- a new recipe for the step you're on (one chat note per recipe)
+            local rec = self:RecipeToLearn(def, self:StepFor(def, skill), skill)
+            if rec and rec.sure then
+                local k = def.key .. ":" .. rec.name
+                if not self.db.told[k] then
+                    self.db.told[k] = true
+                    self:Print("|cffff8c26" .. self:RecipeText(def, rec) .. "|r. Type /prof")
                 end
             end
         end

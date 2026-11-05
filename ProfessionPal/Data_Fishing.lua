@@ -44,6 +44,8 @@ local TRAINERS = {
 
 PP:AddProfession{
     key = "fishing", name = "Fishing", skillLine = 356, icon = "Interface\\Icons\\Trade_Fishing", gather = true,
+    -- tracker buttons (one click = one cast, like an action bar)
+    spells = { { name = "Fishing" } },
     tool = { 6256, "Fishing Pole" },
     ranks = {
         { name = "Apprentice", cap = 75, skill = 0, level = 0 },

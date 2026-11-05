@@ -10,6 +10,8 @@ local _, PP = ...
 
 PP:AddProfession{
     key = "enchanting", name = "Enchanting", skillLine = 333, icon = "Interface\\Icons\\Trade_Engraving",
+    -- tracker buttons (one click = one cast, like an action bar)
+    spells = { { name = "Enchanting" }, { name = "Disenchant", id = 13262 } },
     ranks = {
         { name = "Apprentice", cap = 75, skill = 0, level = 0 },
         { name = "Journeyman", cap = 150, skill = 50, level = 10 },

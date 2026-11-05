@@ -233,6 +233,10 @@ function PP:RefreshTracker()
             msg = nxt.name .. " at level " .. nxt.level
         end
     end
+    if not msg and skill then
+        local rec = self:RecipeToLearn(def, self:StepFor(def, skill), skill)
+        if rec then msg = (rec.src == "vendor" and "BUY RECIPE: " or "LEARN: ") .. rec.name end
+    end
     if msg then
         t.train:SetText(msg)
         y = Put(t, t.train, H(t.train, 17) + 2, y - 2)
@@ -254,18 +258,22 @@ function PP:RefreshTracker()
         local spells = self:ActionSpells()
         if #spells > 0 then
             y = y - 6
-            for i, sp in ipairs(spells) do
-                if i > 7 then break end
+            local PER_ROW = 7
+            local shown = math.min(#spells, PER_ROW * 2)
+            for i = 1, shown do
+                local sp = spells[i]
                 local b = t.btns[i] or SpellButton(t)
                 t.btns[i] = b
                 b.sp = sp
                 b:SetAttribute("spell", sp.name)
                 b.icon:SetTexture(self:SpellIcon(sp))
+                local col, row = (i - 1) % PER_ROW, math.floor((i - 1) / PER_ROW)
                 b:ClearAllPoints()
-                b:SetPoint("TOPLEFT", t, "TOPLEFT", 12 + (i - 1) * (BTN + 4), y)
+                b:SetPoint("TOPLEFT", t, "TOPLEFT", 12 + col * (BTN + 4), y - row * (BTN + 4))
                 b:Show()
             end
-            y = y - BTN - 2
+            local rows = math.floor((shown - 1) / PER_ROW) + 1
+            y = y - rows * (BTN + 4) + 2
         end
     end
     t:SetHeight(-y + 8)
