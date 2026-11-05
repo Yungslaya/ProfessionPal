@@ -91,10 +91,120 @@ local STAT_KEYS = {
     ITEM_MOD_MANA_REGENERATION_SHORT = "mp5",
 }
 
--- Blacksmithing plans sold by the Azeroth Commerce Authority (Wowhead overview)
-local ACA_NAMES = { "^Acolyte's", "^Crusader's", "^Guard's", "^Protector's", "^Veteran's",
-                    "^Justicar's", "^Officer's", "^Prefect's", "^Sentinel's", "^Warder's",
-                    "^Thorium Cestus", "^Thorium Greatmace", "^Enriched Thorium", "^Legionite Glaive" }
+-- ---------- Merchant's Favor plans, known recipes, rare materials ----------
+-- Some Forever plans are bought with Merchant's Favor (crate hand-ins) and some
+-- pieces need rare materials. Picks you can't make right now get an easier
+-- alternative, and the better piece is shown as "Better:" with what it needs.
+local planIdx
+local function norm(s) return (s:lower():gsub("s$", "")) end
+
+function PP:FavorPlan(profKey, name)
+    if not planIdx then
+        planIdx = {}
+        for pk, rows in pairs(PP.FavorPlans or {}) do
+            local t = {}
+            planIdx[pk] = t
+            for _, r in ipairs(rows) do
+                for i = 3, #r do t[norm(r[i])] = { skill = r[1], cost = r[2], name = r[i] } end
+            end
+        end
+    end
+    local t = profKey and planIdx[profKey]
+    return t and name and t[norm(name)]
+end
+
+function PP:FavorHave()
+    local id = PP.Favor and PP.Favor.currency
+    if id and C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo then
+        local info = safe(C_CurrencyInfo.GetCurrencyInfo, id)
+        if type(info) == "table" and type(info.quantity) == "number" then return info.quantity end
+    end
+    return 0
+end
+
+function PP:FavorCamp()
+    local camps = PP.Favor and PP.Favor.camps
+    return camps and camps[self:Faction()]
+end
+
+local function CharKey()
+    return (safe(UnitName, "player") or "?") .. "-" .. (safe(GetRealmName) or "")
+end
+
+-- Remember the recipes you know (read when your profession window is open)
+function PP:ScanKnownRecipes()
+    if not (self.db and C_TradeSkillUI and C_TradeSkillUI.GetAllRecipeIDs) then return end
+    local ids = safe(C_TradeSkillUI.GetAllRecipeIDs)
+    if type(ids) ~= "table" or #ids == 0 then return end
+    self.db.known = self.db.known or {}
+    local key = CharKey()
+    local t = self.db.known[key] or {}
+    self.db.known[key] = t
+    local added = false
+    for _, id in ipairs(ids) do
+        local info = safe(C_TradeSkillUI.GetRecipeInfo, id)
+        if type(info) == "table" and info.learned and info.name and not t[info.name] then
+            t[info.name] = true
+            added = true
+        end
+    end
+    if added and self.RequestRefresh then self:RequestRefresh() end
+end
+
+function PP:KnowsCraft(name)
+    local t = self.db and self.db.known and self.db.known[CharKey()]
+    return (t and name and t[name]) and true or false
+end
+
+function PP:RecipesScanned()
+    return (self.db and self.db.known and self.db.known[CharKey()]) and true or false
+end
+
+-- Can you make it right now?
+--   "ready" : trainer recipe or one you know, rare materials in your bags
+--   "buy"   : plans cost Merchant's Favor and you have enough
+--   "need"  : plans/recipe you can't get yet, or rare materials you don't have
+function PP:GearAccess(it)
+    local state, why = "ready", {}
+    if it.src ~= "T" and not self:KnowsCraft(it.name) then
+        if it.plan then
+            local have = self:FavorHave()
+            if have >= it.plan.cost then
+                state = "buy"
+                why[#why + 1] = "buy plans: " .. it.plan.cost .. " Favor"
+            else
+                state = "need"
+                why[#why + 1] = "needs plans: " .. it.plan.cost .. " Favor (you have " .. have .. ")"
+            end
+        else
+            state = "need"
+            why[#why + 1] = "needs a recipe (drop or vendor)"
+        end
+    end
+    for _, m in ipairs(it.mats or {}) do
+        if PP.ScarceMats and PP.ScarceMats[m[1]] then
+            local have = self:Count(m[1])
+            if have < m[2] then
+                local nm = (C_Item and C_Item.GetItemNameByID and safe(C_Item.GetItemNameByID, m[1])) or (PP.ScarceNames and PP.ScarceNames[m[1]]) or "rare material"
+                state = "need"
+                why[#why + 1] = "needs " .. (m[2] - have) .. " " .. nm
+            end
+        end
+    end
+    return state, table.concat(why, ", ")
+end
+
+local scan = CreateFrame("Frame")
+for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "NEW_RECIPE_LEARNED", "CURRENCY_DISPLAY_UPDATE" }) do
+    pcall(scan.RegisterEvent, scan, e)
+end
+scan:SetScript("OnEvent", function(_, event)
+    if event == "CURRENCY_DISPLAY_UPDATE" then
+        if PP.db and PP.RequestRefresh then PP:RequestRefresh() end
+    else
+        PP:ScanKnownRecipes()
+    end
+end)
 
 -- turn a data row into a named table (once)
 local function Item(r, profKey)
@@ -104,11 +214,7 @@ local function Item(r, profKey)
     r.st = r.st or {}
     local school = PP.GearSchool and PP.GearSchool[r.id]
     if school then for k, v in pairs(school) do r.st[k] = v end end
-    if r.src == "P" and profKey == "blacksmithing" then
-        for _, pat in ipairs(ACA_NAMES) do
-            if r.name:find(pat) then r.aca = true break end
-        end
-    end
+    if r.src == "P" then r.plan = PP:FavorPlan(profKey, r.name) end
     return r
 end
 
@@ -207,7 +313,8 @@ function PP:GearBySlot(def, skill)
     local level = self:PlayerLevel()
     local w = self:Weights()
     local cls = self:PlayerClass()
-    local best, soon = {}, {}
+    local best, soon, better = {}, {}, {}
+    local hideHard = self.db and self.db.gearHideHard
 
     for _, r in ipairs(list) do
         local it = Item(r, def.key)
@@ -216,7 +323,13 @@ function PP:GearBySlot(def, skill)
             local sc = Score(it.st, w, cls)
             if sc >= 3 then
                 if skill >= it.skill and it.level <= level + 2 then
-                    if not best[inv] or sc > best[inv].score then best[inv] = { it = it, score = sc } end
+                    local state, why = self:GearAccess(it)
+                    local c = { it = it, score = sc, state = state, why = why }
+                    if state ~= "need" then
+                        if not best[inv] or sc > best[inv].score then best[inv] = c end
+                    elseif not hideHard then
+                        if not better[inv] or sc > better[inv].score then better[inv] = c end
+                    end
                 elseif it.skill > skill and it.skill <= skill + 40 and it.level <= level + 8 then
                     local s = soon[inv]
                     if not s or it.skill < s.it.skill or (it.skill == s.it.skill and sc > s.score) then
@@ -229,8 +342,8 @@ function PP:GearBySlot(def, skill)
 
     local rows = {}
     for _, inv in ipairs(PP.SLOT_ORDER) do
-        local now, nx = best[inv], soon[inv]
-        if now or nx then
+        local now, nx, bt = best[inv], soon[inv], better[inv]
+        if now or nx or bt then
             local eq = self:EquippedScore(inv, w)
             if now then
                 now.gain = now.score - (eq or 0)
@@ -238,8 +351,11 @@ function PP:GearBySlot(def, skill)
             end
             local floor = math.max(now and now.score or 0, eq or 0)
             if nx and not (nx.score > floor * 1.1 + 1) then nx = nil end
-            if now or nx then
-                rows[#rows + 1] = { inv = inv, name = PP.EQUIP_NAMES[inv], now = now, next = nx, eq = eq }
+            -- "Better:" only when it clearly beats both the easy pick and what you wear
+            if bt and not (bt.score > floor * 1.05 + 0.5) then bt = nil end
+            if bt then bt.gain = bt.score - (eq or 0) end
+            if now or nx or bt then
+                rows[#rows + 1] = { inv = inv, name = PP.EQUIP_NAMES[inv], now = now, next = nx, better = bt, eq = eq }
             end
         end
     end
@@ -248,20 +364,22 @@ end
 
 -- Top 3 upgrades you can make now (best gain first) and the soonest good unlock
 function PP:GearPicks(def, skill)
-    local now, nextPick = {}, nil
+    local now, nextPick, betterPick = {}, nil, nil
     for _, row in ipairs(self:GearBySlot(def, skill)) do
         if row.now and row.now.upgrade then now[#now + 1] = row.now end
         if row.next and (not nextPick or row.next.it.skill < nextPick.it.skill) then nextPick = row.next end
+        if row.better and (not betterPick or row.better.gain > betterPick.gain) then betterPick = row.better end
     end
     table.sort(now, function(a, b) return a.gain > b.gain end)
     while #now > 3 do table.remove(now) end
-    return now, nextPick
+    return now, nextPick, betterPick
 end
 
 function PP:GearSourceText(it)
+    local state, why = self:GearAccess(it)
+    if state ~= "ready" then return why end
     if it.src == "T" then return "trainer" end
-    if it.aca then return "plans: Commerce Authority" end
-    return "recipe needed"
+    return "you know it"
 end
 
 -- Hover text for a gear row
@@ -279,7 +397,25 @@ function PP:GearTooltip(owner, it)
         local name = (C_Item and C_Item.GetItemNameByID and safe(C_Item.GetItemNameByID, m[1])) or ("item " .. m[1])
         local have = self:Count(m[1])
         local ok = have >= m[2]
-        GameTooltip:AddDoubleLine(name, have .. " / " .. m[2], 1, 1, 1, ok and 0.2 or 1, ok and 1 or 0.25, ok and 0.2 or 0.25)
+        local rare = PP.ScarceMats and PP.ScarceMats[m[1]]
+        GameTooltip:AddDoubleLine(name .. (rare and "  (rare)" or ""), have .. " / " .. m[2], 1, 1, 1, ok and 0.2 or 1, ok and 1 or 0.25, ok and 0.2 or 0.25)
+        if rare and not ok then GameTooltip:AddLine("   " .. rare, 0.7, 0.7, 0.7, true) end
+    end
+    if it.plan and not self:KnowsCraft(it.name) then
+        local have = self:FavorHave()
+        local ok = have >= it.plan.cost
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddDoubleLine("Plans: " .. it.plan.cost .. " Merchant's Favor", "you have " .. have,
+            1, 0.82, 0, ok and 0.2 or 1, ok and 1 or 0.25, ok and 0.2 or 0.25)
+        local camp = self:FavorCamp()
+        if camp then
+            GameTooltip:AddLine("Buy at: " .. camp.n .. ", " .. camp.p .. "  " .. string.format("%.1f, %.1f", camp.x, camp.y), 1, 1, 1, true)
+        end
+        if not ok then
+            GameTooltip:AddLine("Get Favor: fill Waylaid Crates (rare mob drop, or Auction House) and hand them in at the camp. 5-20 Favor each.", 0.7, 0.7, 0.7, true)
+        end
+    elseif it.src ~= "T" and not self:KnowsCraft(it.name) and not self:RecipesScanned() then
+        GameTooltip:AddLine("Open your profession window once so I can see which recipes you know.", 0.7, 0.7, 0.7, true)
     end
     GameTooltip:AddLine("Picked by stats for: " .. PP.ROLE_NAMES[self:Role()], 0.7, 0.7, 0.7)
     GameTooltip:Show()

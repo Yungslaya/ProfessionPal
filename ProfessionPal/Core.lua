@@ -84,6 +84,7 @@ local DEFAULTS = {
     trackerButtons = true, -- spell buttons (Find Minerals, Smelting, ...) on the tracker
     role = "auto",         -- gear picks: auto / dps / tank / heal
     showAll = false,       -- show every profession tab, not only the ones you know
+    gearHideHard = false,  -- gear picks: hide pieces that need Favor plans or rare materials
     autoLearn = false,     -- learn guide recipes when a trainer window is open (OFF by default)
     autoLearnMax = 10,     -- spending limit per trainer visit, in gold
     guides = {},           -- imported guides: [profession key] = { title, steps, kind }

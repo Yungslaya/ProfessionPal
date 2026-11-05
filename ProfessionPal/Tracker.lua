@@ -246,7 +246,7 @@ function PP:RefreshTracker()
         local now = self:GearPicks(def, skill)
         local p = now[1]
         if p then
-            t.gearLine:SetText("Gear: " .. p.it.name .. " (" .. (PP.SLOT_NAMES[p.it.slot] or "") .. ")")
+            t.gearLine:SetText("Gear: " .. p.it.name .. " (" .. (PP.SLOT_NAMES[p.it.slot] or "") .. ")" .. (p.state == "buy" and " - buy plans" or ""))
             t.gearLine:SetTextColor(unpack(PP.QualityColor(p.it.q)))
             y = Put(t, t.gearLine, H(t.gearLine, 16) + 2, y - 2)
         end

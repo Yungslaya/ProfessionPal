@@ -239,7 +239,7 @@ function PP:BuildUI()
     -- "GEAR FOR YOU" rows (hover = item tooltip + materials)
     f.gearHead = Text(f, 16, C.gold)
     f.gear = {}
-    for i = 1, 3 do
+    for i = 1, 4 do
         local r = CreateFrame("Button", nil, f)
         r:SetSize(TEXTW, 40)
         r.icon = Icon(r, 34); r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
@@ -478,8 +478,8 @@ function PP:Refresh()
 
     -- gear you can make for your class
     if self:GearListFor(def) and skill then
-        local now, nextPick = self:GearPicks(def, skill)
-        if #now > 0 or nextPick or #self:GearBySlot(def, skill) > 0 then
+        local now, nextPick, betterPick = self:GearPicks(def, skill)
+        if #now > 0 or nextPick or betterPick or #self:GearBySlot(def, skill) > 0 then
             f.gearHead:SetText("GEAR FOR YOU  (" .. PP.ROLE_NAMES[self:Role()] .. ")")
             P.y = P.y - 4
             f.gearBtn:ClearAllPoints(); f.gearBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y + 4); f.gearBtn:Show()
@@ -496,6 +496,17 @@ function PP:Refresh()
                 r.name:SetTextColor(unpack(PP.QualityColor(it.q)))
                 local wear = (it.level > lvl) and ("wear at level " .. it.level) or ("level " .. it.level)
                 r.sub:SetText((PP.SLOT_NAMES[it.slot] or "") .. "  -  " .. wear .. "  -  " .. self:GearSourceText(it))
+                P:Put(r, 40, 30, 4)
+            end
+            -- a better piece that needs plans or rare materials (hover = how to get them)
+            if betterPick then
+                local r, it = f.gear[4], betterPick.it
+                r.it = it
+                r.icon:SetTexture(self:Icon(it.id))
+                r.name:SetText("Better: " .. it.name)
+                r.name:SetTextColor(unpack(PP.QualityColor(it.q)))
+                r.sub:SetText((PP.SLOT_NAMES[it.slot] or "") .. "  -  " .. betterPick.why)
+                r.sub:SetTextColor(1, 0.55, 0.15)
                 P:Put(r, 40, 30, 4)
             end
             if nextPick and #now > 0 then
@@ -666,6 +677,8 @@ function PP:BuildGear()
     g.empty = Text(g, 15, C.gray); g.empty:SetWidth(480)
     g.key = Text(g, 13, C.gray); g.key:SetWidth(480)
     g.key:SetText("Picked by stats for your class and role. Hover an item for details.")
+    g.campHead = Text(g, 15, C.gold); g.campHead:SetWidth(480); g.campHead:Hide()
+    g.camp = PersonRow(g)
     g:SetScript("OnShow", function() PP:RefreshGear() end)
     g:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
     g:SetScale(self.db.scale or 1)
@@ -682,35 +695,54 @@ function PP:RefreshGear()
     g.empty:Hide()
     local rows = (def and skill) and self:GearBySlot(def, skill) or {}
     local y = -72
+    local needCamp = false
+    g.camp:Hide(); g.campHead:Hide()
     for i, row in ipairs(rows) do
         local r = g.rows[i]
         if not r then break end
         r.slot:SetText(row.name)
-        local p = row.now or row.next
+        local p = row.now or row.better or row.next
         local it = p.it
         r.it = it
         r.icon:SetTexture(self:Icon(it.id))
         r.name:SetText(it.name)
         r.name:SetTextColor(unpack(PP.QualityColor(it.q)))
         local sub = "level " .. it.level .. "  -  skill " .. it.skill .. "  -  " .. self:GearSourceText(it)
-        if row.now and row.next then
-            sub = sub .. "\nNext: " .. row.next.it.name .. " at skill " .. row.next.it.skill
+        local extra = 0
+        if row.now and row.better then
+            sub = sub .. "\nBetter: " .. row.better.it.name .. " - " .. row.better.why
+            extra = extra + 14
         end
+        if row.next and p ~= row.next then
+            sub = sub .. "\nNext: " .. row.next.it.name .. " at skill " .. row.next.it.skill
+            extra = extra + 14
+        end
+        if it.plan or (row.better and row.better.it.plan) then needCamp = true end
         r.sub:SetText(sub)
         if row.now and row.now.upgrade then
-            r.state:SetText("Make it!"); SetColor(r.state, C.green)
+            r.state:SetText(row.now.state == "buy" and "Buy plans" or "Make it!"); SetColor(r.state, C.green)
         elseif row.now then
             r.state:SetText("You wear better"); SetColor(r.state, C.gray)
+        elseif p == row.better then
+            r.state:SetText("Needs plans/mats"); SetColor(r.state, C.orange)
         else
             r.state:SetText("At skill " .. it.skill); SetColor(r.state, C.orange)
         end
         r:ClearAllPoints(); r:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y); r:Show()
-        y = y - ((row.now and row.next) and 64 or 50)
+        y = y - 50 - extra
     end
     if #rows == 0 then
         g.empty:SetText(skill and "Nothing here for your class right now." or "Learn this profession first.")
         g.empty:ClearAllPoints(); g.empty:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y); g.empty:Show()
         y = y - 30
+    end
+    local camp = needCamp and self:FavorCamp()
+    if camp then
+        g.campHead:SetText("Plans for Merchant's Favor (you have " .. self:FavorHave() .. "):")
+        g.campHead:ClearAllPoints(); g.campHead:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y - 4); g.campHead:Show()
+        g.camp:SetWho(camp)
+        g.camp:ClearAllPoints(); g.camp:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y - 26); g.camp:Show()
+        y = y - 74
     end
     g.key:ClearAllPoints(); g.key:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y - 4); g.key:Show()
     g:SetHeight(-y + 44)
@@ -807,6 +839,7 @@ function PP:BuildSettings()
     y = y - 42
     steppers[#steppers + 1] = function() showRole() end
     AddCheck("Show all professions (not only mine)", "showAll")
+    AddCheck("Gear: hide pieces that need plans or rare mats", "gearHideHard")
 
     -- auto-learn at the trainer (off by default) + spending limit
     local thead = Text(s, 16, C.gold)
