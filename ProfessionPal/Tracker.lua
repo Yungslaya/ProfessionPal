@@ -213,16 +213,9 @@ function PP:RefreshTracker()
                     y = Put(t, r, 23, y)
                 end
             end
-            local z
-            if st.zones and def.zones then
-                local key = (st.zones[self:Faction()] or {})[1]
-                z = key and def.zones[key]
-            elseif st.zoneList then
-                local first = (st.zoneList[self:Faction()] or {})[1]
-                z = first and { first[1] }
-            end
+            local z = (st.zones or st.zoneList) and self:ZoneOptions(def, st)[1]
             if z then
-                t.zone:SetText(z[1] .. (z[2] and ("  (lvl " .. z[2] .. ")") or ""))
+                t.zone:SetText(z.name .. (z.here and "  (here)" or (z.level and ("  (lvl " .. z.level .. ")") or "")))
                 y = Put(t, t.zone, H(t.zone, 16) + 2, y)
             end
         end

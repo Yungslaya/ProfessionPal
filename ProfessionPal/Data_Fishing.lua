@@ -55,8 +55,8 @@ PP:AddProfession{
     steps = {
         { from = 1, to = 75, text = "Fish", tip = "Pick water close to your trainer. Buy a pole from the fishing vendor.",
           nodes = { { "Raw Brilliant Smallfish", 0, 6291 } },
-          zoneList = { Horde = { { "Durotar", "Beach south of Sen'jin Village." }, { "Mulgore", "The water by Bloodhoof Village." }, { "Tirisfal Glades", "Brightwater Lake, east of Brill." } },
-                       Alliance = { { "Elwynn Forest", "Crystal Lake, northeast of Goldshire." }, { "Dun Morogh", "Iceflow Lake by Brewnall Village." }, { "Teldrassil", "Water near Dolanaar." } } } },
+          zoneList = { Horde = { { "Durotar", "Beach south of Sen'jin Village." }, { "Mulgore", "The water by Bloodhoof Village." }, { "Tirisfal Glades", "Brightwater Lake, east of Brill." }, { "Zephras Isle", "" } },
+                       Alliance = { { "Elwynn Forest", "Crystal Lake, northeast of Goldshire." }, { "Dun Morogh", "Iceflow Lake by Brewnall Village." }, { "Teldrassil", "Water near Dolanaar." }, { "Zephras Isle", "" } } } },
         { from = 75, to = 150, text = "Fish", tip = "Your starting zone or a capital city is fine.",
           nodes = {},
           zoneList = { Horde = { { "The Barrens", "Lushwater Oasis outside Wailing Caverns." }, { "Silverpine Forest", "North Tide's Run beach." } },

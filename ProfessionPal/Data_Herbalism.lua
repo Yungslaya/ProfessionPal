@@ -66,8 +66,8 @@ PP:AddProfession{
     steps = {
         { from = 1, to = 70, text = "Pick herbs", tip = "Peacebloom in clearings, Silverleaf by trees. Earthroot from 15.",
           nodes = { { "Peacebloom", 0, 2447 }, { "Silverleaf", 0, 765 }, { "Earthroot", 0, 2449 } },
-          zoneList = { Horde = { { "Durotar", "From Sen'jin Village, west side of the road to Razor Hill." }, { "Mulgore", "From Bloodhoof Village, around Stonebull Lake." }, { "Tirisfal Glades", "From Brill, northwest, then the fields north of Brightwater Lake." } },
-                       Alliance = { { "Elwynn Forest", "From Goldshire, the trees above Mirror Lake." }, { "Dun Morogh", "From Kharanos north, then east toward Gol'Bolar Quarry." }, { "Teldrassil", "East of Dolanaar, around Starbreeze Village." } } } },
+          zoneList = { Horde = { { "Durotar", "From Sen'jin Village, west side of the road to Razor Hill." }, { "Mulgore", "From Bloodhoof Village, around Stonebull Lake." }, { "Tirisfal Glades", "From Brill, northwest, then the fields north of Brightwater Lake." }, { "Zephras Isle", "From Shen'dar Village, north along the inlet toward Thendal Village." } },
+                       Alliance = { { "Elwynn Forest", "From Goldshire, the trees above Mirror Lake." }, { "Dun Morogh", "From Kharanos north, then east toward Gol'Bolar Quarry." }, { "Teldrassil", "East of Dolanaar, around Starbreeze Village." }, { "Zephras Isle", "From Shen'dar Village, north along the inlet toward Thendal Village." } } } },
         { from = 70, to = 115, text = "Pick herbs", tip = "Mageroyal and Briarthorn from 70. Stranglekelp at 85, Bruiseweed at 100.",
           nodes = { { "Mageroyal", 0, 785 }, { "Briarthorn", 0, 2450 }, { "Stranglekelp", 0, 3820 }, { "Bruiseweed", 0, 2453 } },
           zoneList = { Horde = { { "The Barrens", "West of the Crossroads, then north before the mountains." }, { "Silverpine Forest", "East of the Sepulcher, fields west of Lordamere Lake." } },

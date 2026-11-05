@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.1.0 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.1.1 · for WoW: Forever (interface 16001)
 
 | 12 | 1–300 | 521 | 9 |
 |:--:|:--:|:--:|:--:|

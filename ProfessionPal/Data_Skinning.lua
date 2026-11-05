@@ -58,8 +58,8 @@ PP:AddProfession{
     steps = {
         { from = 1, to = 75, text = "Skin beasts", tip = "Start close to town and skin as you quest.",
           nodes = { { "Light Leather", 0, LIGHT } },
-          zoneList = { Horde = { { "Durotar", "Mottled Boars and Scorpid Workers in the Valley of Trials." }, { "Mulgore", "Plainstriders on Red Cloud Mesa, then toward Bloodhoof Village." }, { "Tirisfal Glades", "Young Scavengers and Duskbats around Deathknell." } },
-                       Alliance = { { "Elwynn Forest", "Young Wolves and Timber Wolves northwest of Northshire Abbey." }, { "Dun Morogh", "Ragged wolves in Coldridge Valley." }, { "Teldrassil", "Thistle Boars in Shadowglen." } } } },
+          zoneList = { Horde = { { "Durotar", "Mottled Boars and Scorpid Workers in the Valley of Trials." }, { "Mulgore", "Plainstriders on Red Cloud Mesa, then toward Bloodhoof Village." }, { "Tirisfal Glades", "Young Scavengers and Duskbats around Deathknell." }, { "Zephras Isle", "" } },
+                       Alliance = { { "Elwynn Forest", "Young Wolves and Timber Wolves northwest of Northshire Abbey." }, { "Dun Morogh", "Ragged wolves in Coldridge Valley." }, { "Teldrassil", "Thistle Boars in Shadowglen." }, { "Zephras Isle", "" } } } },
         { from = 75, to = 125, text = "Skin beasts", tip = "Level 17 beasts at 75, level 18 at 80.",
           nodes = { { "Light Leather", 0, LIGHT }, { "Medium Leather", 0, MEDIUM } },
           zoneList = { Horde = { { "The Barrens", "North of Camp Taurajo, east across the plain." } },

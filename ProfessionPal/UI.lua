@@ -211,7 +211,7 @@ function PP:BuildUI()
 
     f.whereHead = Text(f, 15, C.gold); f.whereHead:SetText("Go to:")
     f.zones = {}
-    for i = 1, 3 do
+    for i = 1, 5 do
         local z = Text(f, 15, C.white); z:SetWidth(TEXTW)
         f.zones[i] = z
     end
@@ -403,28 +403,22 @@ function PP:Refresh()
         P.y = P.y - 4
 
         -- where to go (gathering). Two formats: zone keys (Mining) or { name, tip } lists.
-        local zlist
-        if st.zones then
-            zlist = {}
-            for _, key in ipairs(st.zones[self:Faction()] or {}) do zlist[#zlist + 1] = def.zones[key] end
-        elseif st.zoneList then
-            zlist = {}
-            for _, z in ipairs(st.zoneList[self:Faction()] or {}) do zlist[#zlist + 1] = { z[1], nil, z[2] } end
-        end
-        if zlist and #zlist > 0 then
-            local list = zlist
+        local list = (st.zones or st.zoneList) and self:ZoneOptions(def, st) or {}
+        if #list > 0 then
+            f.whereHead:SetText(#list > 1 and "Go to (closest first):" or "Go to:")
             P:Put(f.whereHead, 16, 24, 4)
-            for zi = 1, math.min(3, #list) do
+            for zi = 1, math.min(#f.zones, #list) do
                 local z = list[zi]
-                if z then
-                    local fs = f.zones[zi]
-                    fs:SetText((zi == 1 and "" or "or  ") .. z[1] .. (z[2] and ("   (level " .. z[2] .. ")") or ""))
-                    SetColor(fs, zi == 1 and C.white or C.gray)
-                    P:Put(fs, P:TextH(fs, 16), 36, 3)
-                    if zi == 1 and z[3] then
-                        f.zoneTip:SetText(z[3])
-                        P:Put(f.zoneTip, P:TextH(f.zoneTip, 15), 50, 6)
-                    end
+                local fs = f.zones[zi]
+                local t = (zi == 1 and "" or "or  ") .. z.name
+                if z.level then t = t .. "   (level " .. z.level .. ")" end
+                if z.here then t = t .. "   - you are here" end
+                fs:SetText(t)
+                SetColor(fs, zi == 1 and C.white or C.gray)
+                P:Put(fs, P:TextH(fs, 16), 36, 3)
+                if zi == 1 and z.tip then
+                    f.zoneTip:SetText(z.tip)
+                    P:Put(f.zoneTip, P:TextH(f.zoneTip, 15), 50, 6)
                 end
             end
         end
