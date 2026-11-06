@@ -1,0 +1,57 @@
+Search guides, news, database...
+Wowhead
+News
+Guides
+WoW Forever Tailoring Leveling Guide 1-300
+Blacksmithing Leveling Steps 1-300
+Skill    Recipe    Crafts    Materials    Learned From
+1–43    Bolt of Linen Cloth    54    108 Linen Cloth    
+Known
+
+43–45    Brown Linen Vest    2    2 Bolt of Linen Cloth
+2 Coarse Thread    
+Trainer
+
+45–70    Linen Belt    33    33 Bolt of Linen Cloth
+33 Coarse Thread    
+Trainer
+
+70–75    Reinforced Linen Cape    7    14 Bolt of Linen Cloth
+21 Coarse Thread    
+Trainer
+
+75–81    Bolt of Woolen Cloth    12    36 Wool Cloth    
+Trainer
+
+81–100    Woolen Cape    27    27 Bolt of Woolen Cloth
+27 Fine Thread    
+Trainer
+
+100–110    Bolt of Silk Cloth    10    40 Silk Cloth    
+Trainer
+
+110–125    Double-stitched Woolen Shoulders    19    57 Bolt of Woolen Cloth
+38 Fine Thread    
+Trainer
+
+125–132    Azure Silk Hood    7    14 Bolt of Silk Cloth
+14 Blue Dye
+7 Fine Thread    
+Trainer
+
+234–250    Runecloth Cloak    18    72 Bolt of Runecloth
+18 Ironweb Spider Silk
+18 Rune Thread    
+Vendor
+
+Pattern: Runecloth Cloak
+Darnall
+250–260    Runecloth Boots    12    48 Bolt of Runecloth
+24 Ironweb Spider Silk
+48 Rugged Leather
+12 Rune Thread    
+Vendor
+
+Pattern: Runecloth Boots
+Darnall
+Crafts on average, starting the profession from 1.

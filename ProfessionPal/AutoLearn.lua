@@ -60,7 +60,7 @@ local function IsRank(name, sub, profs)
     return false
 end
 
-local state = { open = false, busy = false, spent = 0, tried = {}, warned = false, bought = 0 }
+local state = { open = false, busy = false, spent = 0, tried = {}, warned = false, bought = 0, visit = 0 }
 
 local function Scan()
     if not (PP.db and PP.db.autoLearn and state.open) or state.busy then return end
@@ -77,8 +77,8 @@ local function Scan()
             local key = name .. "|" .. tostring(sub)
             local lname = name:lower()
             if not state.tried[key] and (want[lname] or IsRank(name, sub, profs)) then
-                local cost = safe(GetTrainerServiceCost, i) or 0
-                if type(cost) ~= "number" then cost = 0 end
+                local cost = safe(GetTrainerServiceCost, i)
+                if type(cost) ~= "number" or cost < 0 then return end
                 local money = safe(GetMoney) or 0
                 if state.spent + cost > cap then
                     -- over your limit: skip this one, keep going with cheaper ones
@@ -96,7 +96,11 @@ local function Scan()
                     PP:Print("Learned: " .. name .. ((sub and sub ~= "") and (" (" .. sub .. ")") or "") .. "  -  " .. Money(cost))
                 end
                 -- wait for the trainer list to refresh, then look again
-                local function again() state.busy = false; Scan() end
+                local visit = state.visit
+                local function again()
+                    if state.visit ~= visit then return end
+                    state.busy = false; Scan()
+                end
                 if C_Timer and C_Timer.After and state.bought < 40 then C_Timer.After(0.4, again) else state.busy = false end
                 return
                 end
@@ -110,6 +114,7 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({ "TRAINER_SHOW", "TRAINER_UPDATE", "TRAINER_CLOSED" }) do pcall(ev.RegisterEvent, ev, e) end
 ev:SetScript("OnEvent", function(_, e)
     if e == "TRAINER_SHOW" then
+        state.visit = state.visit + 1
         state.open, state.busy, state.spent, state.tried, state.warned, state.bought = true, false, 0, {}, false, 0
         if PP.db and PP.db.autoLearn then
             if SetTrainerServiceTypeFilter then pcall(SetTrainerServiceTypeFilter, "available", 1) end
@@ -119,5 +124,6 @@ ev:SetScript("OnEvent", function(_, e)
         if not state.busy and C_Timer and C_Timer.After then C_Timer.After(0.2, Scan) end
     elseif e == "TRAINER_CLOSED" then
         state.open = false
+        state.visit = state.visit + 1
     end
 end)

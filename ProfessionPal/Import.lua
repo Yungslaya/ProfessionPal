@@ -4,8 +4,8 @@
   Addons can't go online, so the guide comes in by copy and paste.
 
   Reads:
-    - table rows that start with a skill range: "1 to 25", "1-25", "1–25", "At 50", "To 75"
-      then: what to make, how many, materials ("30× Rough Stone", "30x Rough Stone", "30 Rough Stone")
+    - table rows that start with a skill range: "1 to 25", "1-25", "1â€“25", "At 50", "To 75"
+      then: what to make, how many, materials ("30Ã— Rough Stone", "30x Rough Stone", "30 Rough Stone")
     - extra material lines under a row (how copied tables look)
     - "Trainer" / "Vendor" / "Pattern: ..." lines (recipe source)
     - gathering guides: headings like "Mining from 65 to 125" + zone names + the first sentence
@@ -21,11 +21,11 @@ local function trim(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
 
 local function normalize(text)
     text = text:gsub("\r\n", "\n"):gsub("\r", "\n")
-    text = text:gsub("\195\151", "x")                 -- ×
-    text = text:gsub("\226\128\147", "-")             -- –
-    text = text:gsub("\226\128\148", "-")             -- —
-    text = text:gsub("\226\128\153", "'")             -- ’
-    text = text:gsub("\226\128\152", "'")             -- ‘
+    text = text:gsub("\195\151", "x")                 -- Ã—
+    text = text:gsub("\226\128\147", "-")             -- â€“
+    text = text:gsub("\226\128\148", "-")             -- â€”
+    text = text:gsub("\226\128\153", "'")             -- â€™
+    text = text:gsub("\226\128\152", "'")             -- â€˜
     text = text:gsub("\194\160", " ")                 -- no-break space
     text = text:gsub("(%d)[ ]*x[ ]+(%a)", "%1x %2")   -- "30x   Rough Stone" -> "30x Rough Stone"
     return text
@@ -193,6 +193,7 @@ end
 -- Returns { title, prof = key or nil, steps = {...}, kind = "craft"/"gather" } or nil, reason
 function PP.ParseGuide(text)
     if type(text) ~= "string" or not text:find("%d") then return nil, "Nothing to read. Paste a guide first." end
+    if #text > 250000 then return nil, "Guide too long. Copy only the leveling table." end
     text = normalize(text)
     local lines = splitLines(text)
     local zones = zoneSet()

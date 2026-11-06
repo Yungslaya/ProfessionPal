@@ -1,0 +1,73 @@
+Search guides, news, database...
+Wowhead
+News
+Guides
+Skip to content
+Icy Veins
+WoW Forever
+World of Warcraft: Forever Blacksmithing Leveling Guide
+Last Updated:
+Nov 4, 2026
+1. Blacksmithing Leveling Guide from 1 to 225 in WoW Forever
+2. Materials Needed
+Material Approximate Quantity
+ Rough Stone 90
+ Coarse Stone 72
+Rank Skill Cap Blacksmithing Skill Required Character Level Required
+Apprentice 75 None None
+Journeyman 150 50 10
+Leveling Blacksmithing from 1 to 75
+
+Start with  Rough Sharpening Stones, then switch to  Rough Grinding Stones at 25. Keep the grinding stones until you reach 80. You'll need two for each pair of  Runed Copper Gauntlets and ten more if you make  Silver Rods at 75. Craft the gauntlets at an anvil with your  Blacksmith Hammer.
+
+At 50, start making  Coarse Grinding Stones. You'll need 36 for  Patterned Bronze Bracers later. Once you've made all 36, check your skill and make just enough gauntlets to reach 75.
+
+Skill Range Item Approximate Crafts Materials
+1 to 25  Rough Sharpening Stone 30 30×  Rough Stone
+25 to 50  Rough Grinding Stone 30 60×  Rough Stone
+50 to 67  Coarse Grinding Stone 36 72×  Coarse Stone
+67 to 75  Runed Copper Gauntlets 8 64×  Copper Bar
+16×  Rough Grinding Stone
+Leveling Blacksmithing from 75 to 150
+
+Learn Journeyman Blacksmithing before crafting past 75. If you have ten  Rough Grinding Stones left, compare the price of one  Silver Bar with ten  Copper Bars.
+
+ADVERTISEMENT
+
+Use your  Coarse Grinding Stones for  Patterned Bronze Bracers at 95. At 100, switch to  Heavy Grinding Stones and keep all 20 for  Golden Scale Bracers at 175.
+
+Skill Range Item Approximate Crafts Materials
+75 to 80  Runed Copper Belt 5 50×  Copper Bar
+80 to 95  Rough Bronze Leggings 15 90×  Bronze Bar
+95 to 100  Patterned Bronze Bracers 5 25×  Bronze Bar
+10×  Coarse Grinding Stone
+100 to 112  Heavy Grinding Stone 20 60×  Heavy Stone
+112 to 125  Patterned Bronze Bracers 13 65×  Bronze Bar
+26×  Coarse Grinding Stone
+125 to 150  Bronze Warhammer 25 200×  Bronze Bar
+25×  Medium Leather
+25×  Strong Flux
+Leveling Blacksmithing from 150 to 225
+
+Learn Expert Blacksmithing before crafting past 150.
+
+ADVERTISEMENT
+Skill Range Item Approximate Crafts Materials
+150 to 165  Bronze Warhammer 19 152×  Bronze Bar
+19×  Medium Leather
+19×  Strong Flux
+165 to 175  Green Iron Bracers 15 90×  Iron Bar
+15×  Green Dye
+175 to 185  Golden Scale Bracers 10 50×  Steel Bar
+20×  Heavy Grinding Stone
+185 to 200  Heavy Mithril Gauntlet 15 90×  Mithril Bar
+60×  Mageweave Cloth
+200 to 215  Mithril Plate Pants 19 228×  Mithril Bar
+215 to 225  Heavy Mithril Breastplate 10 160×  Mithril Bar
+Leveling Blacksmithing from 225 to 300
+
+We don’t yet have enough information to recommend a route from 225 to 300.
+
+Abide
+Guide Author
+BACK TO TOP

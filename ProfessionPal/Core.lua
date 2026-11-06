@@ -17,28 +17,29 @@ _G.ProfessionPal = PP
 PP.professions = {}
 PP.byKey = {}
 
-PP.FONT = "Fonts\\FRIZQT__.TTF"
+PP.FONT = "Fonts\\ARIALN.TTF"
+PP.TITLE_FONT = "Fonts\\FRIZQT__.TTF"
 PP.C = {
-    gold   = { 1.00, 0.82, 0.00 },
-    white  = { 1.00, 1.00, 1.00 },
-    green  = { 0.20, 1.00, 0.20 },
+    gold   = { 0.94, 0.78, 0.47 },
+    white  = { 0.93, 0.94, 0.96 },
+    green  = { 0.45, 0.87, 0.60 },
     red    = { 1.00, 0.25, 0.25 },
     orange = { 1.00, 0.55, 0.15 },
-    gray   = { 0.74, 0.77, 0.86 },   -- soft blue-gray, reads well on navy
+    gray   = { 0.69, 0.74, 0.81 },   -- soft blue-gray, reads well on navy
     yellow = { 1.00, 0.86, 0.25 },   -- gold-yellow notes
 }
 
 -- ---------- look: dark navy panels, thin blue-gray border, lighter header strip ----------
 PP.THEME = {
-    bg        = { 0.086, 0.098, 0.180, 0.94 },  -- panel
-    band      = { 0.150, 0.170, 0.310, 1.00 },  -- header strip
-    border    = { 0.330, 0.370, 0.600, 1.00 },  -- thin edge
-    inset     = { 0.050, 0.060, 0.120, 0.90 },  -- boxes inside a panel
-    btn       = { 0.150, 0.170, 0.310, 1.00 },
-    btnHover  = { 0.230, 0.260, 0.450, 1.00 },
-    btnSel    = { 0.270, 0.300, 0.540, 1.00 },
-    btnBorder = { 0.400, 0.450, 0.700, 1.00 },
-    selBorder = { 1.000, 0.820, 0.000, 1.00 },  -- gold edge on the selected tab
+    bg        = { 0.035, 0.047, 0.072, 0.97 },
+    band      = { 0.070, 0.087, 0.126, 1.00 },
+    border    = { 0.220, 0.260, 0.330, 1.00 },
+    inset     = { 0.065, 0.083, 0.118, 0.96 },
+    btn       = { 0.080, 0.104, 0.145, 1.00 },
+    btnHover  = { 0.140, 0.179, 0.235, 1.00 },
+    btnSel    = { 0.170, 0.151, 0.102, 1.00 },
+    btnBorder = { 0.240, 0.293, 0.365, 1.00 },
+    selBorder = { 0.750, 0.600, 0.330, 1.00 },
 }
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
@@ -135,7 +136,9 @@ function PP.TrainerList(rows)
     local out = {}
     for i, r in ipairs(rows or {}) do
         if r.n then
-            out[#out + 1] = r
+            local copy = {}
+            for k, v in pairs(r) do copy[k] = v end
+            out[#out + 1] = copy
         else
             out[#out + 1] = { n = r[1], p = r[2], m = r[3], x = r[4], y = r[5], order = i, junior = r.junior }
         end
@@ -239,14 +242,14 @@ function PP:GetSkill(def)
 end
 
 -- ---------- bags + bank counts ----------
-function PP:Count(item)
+function PP:Count(item, bagsOnly)
     if item == nil then return 0 end
     local n
     if C_Item and C_Item.GetItemCount then
-        n = safe(C_Item.GetItemCount, item, true, false, true, true)
-        if n == nil then n = safe(C_Item.GetItemCount, item, true) end
+        n = safe(C_Item.GetItemCount, item, not bagsOnly, false, false, not bagsOnly)
+        if n == nil then n = safe(C_Item.GetItemCount, item, not bagsOnly) end
     end
-    if n == nil and GetItemCount then n = safe(GetItemCount, item, true) end
+    if n == nil and GetItemCount then n = safe(GetItemCount, item, not bagsOnly) end
     if not isNum(n) then return 0 end
     return n
 end
@@ -672,6 +675,12 @@ function PP:ShoppingList(def, skill, max)
         local st = self:StepFor(def, s)
         if not st then break end
         local e = math.min(st.to, stop)
+        local custom = self.ImportedGuide and self:ImportedGuide(def)
+        if custom and not st.imported then
+            for _, step in ipairs(custom.steps) do
+                if step.from > s and step.from < e then e = step.from end
+            end
+        end
         local n = PP.CraftsFor(st, s, e)
         if st.keepAll and st.makes and e >= st.to then
             n = math.max(n, st.crafts - self:Count(st.makes))

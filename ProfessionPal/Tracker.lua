@@ -14,7 +14,7 @@
 
 local _, PP = ...
 local C = PP.C
-local TW = 300   -- tracker width
+local TW = 320   -- tracker width
 local BTN = 36   -- spell button size
 
 local function SpellButton(t)
@@ -87,12 +87,16 @@ function PP:BuildTracker()
 
     t.icon = Icon(t, 28)
     t.head = Text(t, 15, C.gold); t.head:SetWidth(TW - 60)
-    t.step = Text(t, 16, C.white); t.step:SetWidth(TW - 24)
+    t.step = Text(t, 18, C.white); t.step:SetWidth(TW - 24)
     t.sub = Text(t, 13, C.gray); t.sub:SetWidth(TW - 24)
     t.rows = {}
     for i = 1, 5 do
         local r = CreateFrame("Frame", nil, t)
-        r:SetSize(TW - 24, 22)
+        r:SetSize(TW - 24, 26)
+        r.fill = r:CreateTexture(nil, "BACKGROUND")
+        r.fill:SetTexture("Interface\\Buttons\\WHITE8X8")
+        r.fill:SetVertexColor(0.12, 0.16, 0.22, i % 2 == 1 and 0.45 or 0.15)
+        r.fill:SetAllPoints(r)
         r.icon = Icon(r, 20); r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
         r.name = Text(r, 14, C.white); r.name:SetPoint("LEFT", r.icon, "RIGHT", 6, 0); r.name:SetWidth(TW - 120)
         r.count = Text(r, 14, C.white, "RIGHT"); r.count:SetPoint("RIGHT", r, "RIGHT", 0, 0); r.count:SetWidth(80)
@@ -193,7 +197,7 @@ function PP:RefreshTracker()
             elseif st.smelt then
                 t.step:SetText(st.text .. "  x " .. n)
             else
-                t.step:SetText((n > 0) and ("Make " .. n .. " x " .. st.text) or ("Make: " .. st.text))
+                t.step:SetText((n > 0) and (n .. " x " .. st.text) or ("Make: " .. st.text))
             end
             t.step:SetTextColor(unpack(C.white))
             y = Put(t, t.step, H(t.step, 18) + 2, y)
@@ -209,7 +213,7 @@ function PP:RefreshTracker()
                     r.name:SetText(m[3] or tostring(m[1]))
                     r.count:SetText(have .. "/" .. need)
                     r.count:SetTextColor(unpack(have >= need and C.green or C.red))
-                    y = Put(t, r, 23, y)
+                    y = Put(t, r, 28, y)
                 end
             end
             local z = (st.zones or st.zoneList) and self:ZoneOptions(def, st)[1]

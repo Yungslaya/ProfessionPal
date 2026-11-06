@@ -134,6 +134,7 @@ end
 -- Remember the recipes you know (read when your profession window is open)
 function PP:ScanKnownRecipes()
     if not (self.db and C_TradeSkillUI and C_TradeSkillUI.GetAllRecipeIDs) then return end
+    if safe(C_TradeSkillUI.IsTradeSkillLinked) or safe(C_TradeSkillUI.IsTradeSkillGuild) then return end
     local ids = safe(C_TradeSkillUI.GetAllRecipeIDs)
     if type(ids) ~= "table" or #ids == 0 then return end
     self.db.known = self.db.known or {}
@@ -152,7 +153,8 @@ function PP:ScanKnownRecipes()
             end
             if info.learned then
                 self.db.recipeIDs = self.db.recipeIDs or {}
-                self.db.recipeIDs[info.name] = id
+                self.db.recipeIDs[key] = self.db.recipeIDs[key] or {}
+                self.db.recipeIDs[key][info.name] = id
             end
             -- remember what this recipe needs (for the gear shopping lists)
             if not mats[info.name] and C_TradeSkillUI.GetRecipeSchematic then
@@ -166,7 +168,7 @@ function PP:ScanKnownRecipes()
                             list[#list + 1] = { r.itemID, n }
                         end
                     end
-                    if #list > 0 then mats[info.name] = list end
+                    if #list > 0 then mats[info.name] = list; added = true end
                 end
             end
         end
@@ -181,7 +183,7 @@ end
 
 -- Materials for one crafted piece: from our data, or read from your profession window
 function PP:GearMats(it)
-    if it.mats then return it.mats end
+    if it.mats and #it.mats > 0 then return it.mats end
     local m = self.db and self.db.recipeMats
     return m and m[it.name]
 end
@@ -262,16 +264,16 @@ PP.CRAFT_WHERE = {
 
 function PP:MatsReady(it)
     local mats = self:GearMats(it)
-    if not mats then return false end
+    if not mats or #mats == 0 then return false end
     for _, m in ipairs(mats) do
-        if self:Count(m[1]) < m[2] then return false end
+        if self:Count(m[1], true) < m[2] then return false end
     end
     return true
 end
 
 -- Show the Craft button: you have the materials and know (or can train) the recipe
 function PP:CanCraft(it)
-    return self:MatsReady(it) and (it.src == "T" or self:KnowsCraft(it.name))
+    return it ~= nil and self:MatsReady(it) and self:KnowsCraft(it.name)
 end
 
 local function ProfessionOpen()
@@ -282,15 +284,33 @@ end
 function PP:CraftGear(it)
     local ui = C_TradeSkillUI
     if not (it and ui) then return end
-    if self:InCombat() then self:Print("You can't craft in combat.") return end
-    local id = self.db.recipeIDs and self.db.recipeIDs[it.name]
+    if self:InCombat() then self:Print("Finish combat first.") return end
+    if not self:CanCraft(it) then
+        self:Print(self:KnowsCraft(it.name) and "Put the materials in your bags first." or "Open your profession to check the recipe first.")
+        return
+    end
+    local ids = self.db.recipeIDs and self.db.recipeIDs[CharKey()]
+    local id = ids and ids[it.name]
     if id and ProfessionOpen() and ui.CraftRecipe then
         local info = safe(ui.GetRecipeInfo, id)
-        if type(info) == "table" and info.learned == false then
-            self:Print("Learn " .. it.name .. " at your trainer first.")
+        -- Validate again at the click, even if a different profession is open.
+        if type(info) ~= "table" or info.learned ~= true or info.name ~= it.name then
+            self:Print("Open the recipe in your profession first.")
             return
         end
-        safe(ui.CraftRecipe, id, 1)
+        if ui.GetRecipeItemLink then
+            local link = safe(ui.GetRecipeItemLink, id)
+            local output = type(link) == "string" and tonumber(link:match("item:(%d+)"))
+            if output and output ~= it.id then self:Print("Recipe changed. Reopen your profession.") return end
+        end
+        if ui.GetCraftableCount then
+            local count = safe(ui.GetCraftableCount, id)
+            if type(count) == "number" and count < 1 then
+                self:Print("Check your materials, tools and crafting station.") return
+            end
+        end
+        local ok, err = pcall(ui.CraftRecipe, id, 1)
+        if not ok then self:Print("Crafting unavailable. Use Create in your profession window.") end
         return
     end
     if not id and ProfessionOpen() and self:RecipesScanned() then
@@ -301,7 +321,7 @@ function PP:CraftGear(it)
     if id and ui.OpenRecipe then
         safe(ui.OpenRecipe, id)
     else
-        local def = self:SelectedDef()
+        local def = self.byKey[it.profKey] or self:SelectedDef()
         if def and def.skillLine and ui.OpenTradeSkill then safe(ui.OpenTradeSkill, def.skillLine) end
     end
     self:Print("Opened your profession. Click |cff33ff33Craft it|r again to make " .. it.name .. ".")
@@ -359,9 +379,10 @@ end)
 
 -- turn a data row into a named table (once)
 local function Item(r, profKey)
-    if r.id then return r end
+    if r.id then r.profKey = profKey or r.profKey; return r end
     r.id, r.name, r.skill, r.level, r.class, r.sub, r.slot, r.q, r.src, r.spec, r.st, r.mats =
         r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11], r[12]
+    r.profKey = profKey
     r.st = r.st or {}
     local school = PP.GearSchool and PP.GearSchool[r.id]
     if school then for k, v in pairs(school) do r.st[k] = v end end
@@ -470,10 +491,10 @@ function PP:GearBySlot(def, skill)
     for _, r in ipairs(list) do
         local it = Item(r, def.key)
         local inv = EQUIP_SLOT[it.slot]
-        if inv and KnowsSpec(it.spec) and self:CanUse(it, math.max(level, it.level)) then
+        if inv and KnowsSpec(it.spec) and self:CanUse(it, level) then
             local sc = Score(it.st, w, cls)
             if sc >= 3 then
-                if skill >= it.skill and it.level <= level + 2 then
+                if skill >= it.skill and it.level <= level then
                     local state, why = self:GearAccess(it)
                     local c = { it = it, score = sc, state = state, why = why }
                     if state ~= "need" then

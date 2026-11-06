@@ -11,7 +11,8 @@ local TEXTW = W - 60   -- text width
 -- ---------- builders ----------
 local function Text(parent, size, color, justify)
     local fs = parent:CreateFontString(nil, "OVERLAY")
-    fs:SetFont(PP.FONT, size, "")
+    size = math.max(14, size)
+    fs:SetFont(size >= 18 and (PP.TITLE_FONT or PP.FONT) or PP.FONT, size, "")
     fs:SetShadowOffset(1, -1)
     fs:SetShadowColor(0, 0, 0, 1)
     fs:SetTextColor(unpack(color or C.white))
@@ -21,13 +22,19 @@ end
 
 local function SetColor(fs, color) fs:SetTextColor(unpack(color)) end
 
+local function OneLine(fs)
+    if fs.SetWordWrap then fs:SetWordWrap(false) end
+    if fs.SetMaxLines then fs:SetMaxLines(1) end
+    return fs
+end
+
 -- Flat navy button with gold text (lighter when you point at it, gold edge when selected)
 local function Button(parent, label, w, h, onClick)
     local T = PP.THEME
     local b = CreateFrame("Button", nil, parent, "BackdropTemplate")
     b:SetSize(w, h or 30)
     PP.Skin(b, nil, { bg = T.btn, border = T.btnBorder })
-    local fs = Text(b, 15, C.gold, "CENTER")
+    local fs = Text(b, 15, C.white, "CENTER")
     fs:SetPoint("LEFT", b, "LEFT", 4, 0)
     fs:SetPoint("RIGHT", b, "RIGHT", -4, 0)
     b:SetFontString(fs)
@@ -42,7 +49,7 @@ local function Button(parent, label, w, h, onClick)
     b:SetScript("OnEnter", function(self) if self:IsEnabled() then paint(self, true) end end)
     b:SetScript("OnLeave", function(self) paint(self, false) end)
     b:SetScript("OnDisable", function(self) fs:SetTextColor(0.45, 0.47, 0.55); paint(self, false) end)
-    b:SetScript("OnEnable", function(self) fs:SetTextColor(unpack(self.textColor or C.gold)) end)
+    b:SetScript("OnEnable", function(self) fs:SetTextColor(unpack(self.textColor or C.white)) end)
     b:SetScript("OnMouseDown", function(self) if self:IsEnabled() then fs:SetPoint("LEFT", self, "LEFT", 5, -1) end end)
     b:SetScript("OnMouseUp", function(self) fs:SetPoint("LEFT", self, "LEFT", 4, 0) end)
     function b:SetSelected(on) self.selected = on and true or false; paint(self, false) end
@@ -65,7 +72,7 @@ local function Window(name, w, title)
     f:SetClampedToScreen(true)
     PP.Skin(f, 40)
     f.title = Text(f, 18, C.gold, "CENTER")
-    f.title:SetPoint("TOP", f, "TOP", 0, -11)
+    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 18, -11)
     f.title:SetText(title)
     local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -2)
@@ -134,12 +141,12 @@ end
 local function PersonRow(parent)
     local r = CreateFrame("Frame", nil, parent)
     r:SetSize(TEXTW, 44)
-    r.name = Text(r, 15, C.white)
-    r.name:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
-    r.name:SetWidth(TEXTW - 190)
-    r.place = Text(r, 14, C.gray)
-    r.place:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -3)
-    r.place:SetWidth(TEXTW - 190)
+    r.name = OneLine(Text(r, 15, C.white))
+    r.name:SetPoint("TOPLEFT", r, "TOPLEFT", 0, -2)
+    r.name:SetWidth(TEXTW - 196)
+    r.place = OneLine(Text(r, 14, C.gray))
+    r.place:SetPoint("TOPLEFT", r, "TOPLEFT", 0, -22)
+    r.place:SetWidth(TEXTW - 196)
     r.pin = Button(r, "Map Pin", 90, 28, function() PP:Pin(r.who) end)
     r.pin:SetPoint("TOPRIGHT", r, "TOPRIGHT", -92, -4)
     r.tom = Button(r, "TomTom", 88, 28, function() PP:TomTom(r.who) end)
@@ -147,11 +154,7 @@ local function PersonRow(parent)
     function r:SetWho(t, extra)
         self.who = t
         self.name:SetText(t.n .. (extra or ""))
-        if t.x then
-            self.place:SetText(t.p .. "   " .. string.format("%.1f, %.1f", t.x, t.y))
-        else
-            self.place:SetText(t.p)
-        end
+        self.place:SetText(t.p)
         if t.m and t.x then self.pin:Show() else self.pin:Hide() end
         if t.m and t.x and TomTom and TomTom.AddWaypoint then self.tom:Show() else self.tom:Hide() end
     end
@@ -165,7 +168,7 @@ local function ItemRow(parent)
     r:SetSize(TEXTW, 34)
     r.icon = Icon(r, 32)
     r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
-    r.name = Text(r, 15, C.white)
+    r.name = OneLine(Text(r, 15, C.white))
     r.name:SetPoint("LEFT", r.icon, "RIGHT", 10, 0)
     r.name:SetWidth(TEXTW - 170)
     r.count = Text(r, 16, C.white, "RIGHT")
@@ -197,12 +200,12 @@ function PP:BuildUI()
     -- profession buttons (4 per row)
     f.tabs = {}
     for i, def in ipairs(self.professions) do
-        local b = Button(f, def.name, 112, 30, function()
+        local b = Button(f, def.name, 146, 30, function()
             PP.db.selected = def.key
             PP:Refresh()
         end)
-        local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
-        b:SetPoint("TOPLEFT", f, "TOPLEFT", 22 + col * 116, -46 - row * 34)
+        local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
+        b:SetPoint("TOPLEFT", f, "TOPLEFT", 25 + col * 152, -46 - row * 34)
         b.def = def
         b:Hide()
         f.tabs[i] = b
@@ -215,6 +218,13 @@ function PP:BuildUI()
     f.alert = Text(f, 16, C.red); f.alert:SetWidth(TEXTW)
 
     f.secNext = Text(f, 16, C.gold); f.secNext:SetText("NEXT STEP")
+    f.stepPanel = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+    f.stepPanel:SetTexture("Interface\\Buttons\\WHITE8X8")
+    f.stepPanel:SetVertexColor(unpack(PP.THEME.inset))
+    f.stepAccent = f:CreateTexture(nil, "BACKGROUND", nil, 2)
+    f.stepAccent:SetTexture("Interface\\Buttons\\WHITE8X8")
+    f.stepAccent:SetVertexColor(unpack(PP.C.gold))
+    f.stepAccent:SetWidth(3)
     f.stepIcon = Icon(f, 44)
     f.stepText = Text(f, 18, C.white); f.stepText:SetWidth(TEXTW - 56)
     f.stepSub = Text(f, 15, C.gray); f.stepSub:SetWidth(TEXTW - 56)
@@ -243,15 +253,15 @@ function PP:BuildUI()
         local r = CreateFrame("Button", nil, f)
         r:SetSize(TEXTW, 40)
         r.icon = Icon(r, 34); r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
-        r.name = Text(r, 15, C.white); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 10, -1); r.name:SetWidth(TEXTW - 130)
-        r.sub = Text(r, 13, C.gray); r.sub:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -3); r.sub:SetWidth(TEXTW - 130)
-        r.list = Button(r, "What I need", 110, 26, function()
+        r.name = OneLine(Text(r, 15, C.white)); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 10, -1); r.name:SetWidth(TEXTW - 130)
+        r.sub = OneLine(Text(r, 13, C.gray)); r.sub:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 10, -21); r.sub:SetWidth(TEXTW - 130)
+        r.list = Button(r, "Materials", 110, 26, function()
             if r.craft then PP:CraftGear(r.it) else PP:ShowGearShop({ r.it }) end
         end)
         r.list:SetPoint("RIGHT", r, "RIGHT", 0, 0)
         function r:SetCraft(on)
             self.craft = on
-            self.list:SetText(on and "Craft it" or "What I need")
+            self.list:SetText(on and "Craft it" or "Materials")
             self.list:SetLabelColor(on and C.green or C.gold)
         end
         r:SetScript("OnEnter", function(self) PP:GearTooltip(self, self.it) end)
@@ -261,7 +271,7 @@ function PP:BuildUI()
     end
     f.gearNext = Text(f, 14, C.gray); f.gearNext:SetWidth(TEXTW)
     f.gearBtn = Button(f, "All Gear", 110, 26, function() PP:ToggleGear() end)
-    f.gearShopBtn = Button(f, "Shop for All", 130, 26, function() PP:ShowGearShopAll() end)
+    f.gearShopBtn = Button(f, "All Materials", 130, 26, function() PP:ShowGearShopAll() end)
 
     f.secTrain = Text(f, 16, C.gold)
     f.trainText = Text(f, 16, C.white); f.trainText:SetWidth(TEXTW)
@@ -279,7 +289,7 @@ end
 
 local function HideAll(f)
     for _, k in ipairs({ "headIcon", "headName", "headSkill", "alert", "secNext", "stepIcon", "stepText",
-                         "stepSub", "whereHead", "zoneTip", "tool", "tip", "vendorHead", "vendor",
+                         "stepSub", "stepPanel", "stepAccent", "whereHead", "zoneTip", "tool", "tip", "vendorHead", "vendor",
                          "secTrain", "trainText", "gearHead", "gearNext", "gearBtn", "gearShopBtn", "learn", "guideLine" }) do
         if f[k] then f[k]:Hide() end
     end
@@ -324,18 +334,21 @@ function PP:Refresh()
         for _, b in ipairs(f.tabs) do shown[#shown + 1] = b end
     end
     for i, b in ipairs(shown) do
-        local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
+        local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
         b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", f, "TOPLEFT", 22 + col * 116, -46 - row * 34)
+        b:SetPoint("TOPLEFT", f, "TOPLEFT", 25 + col * 152, -46 - row * 34)
         b:Show()
-        b:SetText(b.skill and (b.def.name .. " " .. b.skill) or b.def.name)
         local fs = b.GetFontString and b:GetFontString()
-        if fs then fs:SetFont(PP.FONT, (#b:GetText() > 10) and 13 or 15, "") end
+        if fs then fs:SetFont(PP.FONT, 15, ""); OneLine(fs) end
+        b:SetText(b.def.name)
+        -- too long for the button? drop the number (it is in the header anyway)
+        local tw = fs and fs.GetUnboundedStringWidth and fs:GetUnboundedStringWidth()
+        if b.skill and type(tw) == "number" and tw > 136 then b:SetText(b.def.name) end
         -- selected tab: lighter fill, gold edge, gold text; others: white text
         b:SetLabelColor((b.def == def) and C.gold or C.white)
         b:SetSelected(b.def == def)
     end
-    f.top = -46 - (math.floor((math.max(1, #shown) - 1) / 4) + 1) * 34 - 8
+    f.top = -46 - (math.floor((math.max(1, #shown) - 1) / 3) + 1) * 34 - 8
 
     local skill, max = self:GetSkill(def)
     local P = Placer(f, f.top)
@@ -353,7 +366,7 @@ function PP:Refresh()
         SetColor(f.headSkill, C.red)
     end
     f.headSkill:ClearAllPoints(); f.headSkill:SetPoint("TOPLEFT", f.headName, "BOTTOMLEFT", 0, -4); f.headSkill:Show()
-    P.y = P.y - 56
+    P.y = P.y - 68
     local imported = self.ImportedGuide and self:ImportedGuide(def)
     if imported then
         local st = skill and self:StepFor(def, skill)
@@ -380,7 +393,16 @@ function PP:Refresh()
     local st = self:StepFor(def, skill or 1)
     local recipeNeed
     if st and not (skill and skill >= 300) then
-        P:Put(f.secNext, 18, 24, 4)
+        P.y = P.y - 8
+        P:Put(f.secNext, 18, 24, 8)
+        f.stepPanel:ClearAllPoints()
+        f.stepPanel:SetPoint("TOPLEFT", f.secNext, "TOPLEFT", -12, 8)
+        f.stepPanel:SetPoint("BOTTOMRIGHT", f.stepSub, "BOTTOMRIGHT", 12, -10)
+        f.stepPanel:Show()
+        f.stepAccent:ClearAllPoints()
+        f.stepAccent:SetPoint("TOPLEFT", f.stepPanel, "TOPLEFT", 0, 0)
+        f.stepAccent:SetPoint("BOTTOMLEFT", f.stepPanel, "BOTTOMLEFT", 0, 0)
+        f.stepAccent:Show()
         local s = skill or 1
         local n = self:CraftsNow(st, s)
         local iconItem
@@ -391,7 +413,7 @@ function PP:Refresh()
             f.stepText:SetText(st.text .. "  x " .. n)
             iconItem = st.mats[1][1]
         else
-            f.stepText:SetText((n > 0) and ("Make " .. n .. "  x  " .. st.text) or ("Make:  " .. st.text))
+            f.stepText:SetText((n > 0) and (n .. " x " .. st.text) or ("Make:  " .. st.text))
             iconItem = st.mats and st.mats[1] and st.mats[1][1]
         end
         local sub = "Until skill " .. st.to
@@ -403,7 +425,7 @@ function PP:Refresh()
         f.stepText:ClearAllPoints(); f.stepText:SetPoint("TOPLEFT", f.stepIcon, "TOPRIGHT", 12, 0); f.stepText:Show()
         f.stepSub:ClearAllPoints(); f.stepSub:SetPoint("TOPLEFT", f.stepText, "BOTTOMLEFT", 0, -4); f.stepSub:Show()
         local th = P:TextH(f.stepText, 20) + P:TextH(f.stepSub, 16) + 8
-        P.y = P.y - math.max(48, th) - 6
+        P.y = P.y - math.max(48, th) - 20
 
         -- a new recipe this step needs (e.g. Heavy Linen Bandage at First Aid 40)
         recipeNeed = self:RecipeToLearn(def, st, skill)
@@ -451,7 +473,7 @@ function PP:Refresh()
         -- where to go (gathering). Two formats: zone keys (Mining) or { name, tip } lists.
         local list = (st.zones or st.zoneList) and self:ZoneOptions(def, st) or {}
         if #list > 0 then
-            f.whereHead:SetText(#list > 1 and "Go to (closest first):" or "Go to:")
+            f.whereHead:SetText("Go to:")
             P:Put(f.whereHead, 16, 24, 4)
             for zi = 1, math.min(#f.zones, #list) do
                 local z = list[zi]
@@ -491,13 +513,13 @@ function PP:Refresh()
     if self:GearListFor(def) and skill then
         local now, nextPick, betterPick = self:GearPicks(def, skill)
         if #now > 0 or nextPick or betterPick or #self:GearBySlot(def, skill) > 0 then
-            f.gearHead:SetText("GEAR FOR YOU  (" .. PP.ROLE_NAMES[self:Role()] .. ")")
+            f.gearHead:SetText("GEAR  /  " .. PP.ROLE_NAMES[self:Role()])
             P.y = P.y - 4
-            f.gearBtn:ClearAllPoints(); f.gearBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y + 4); f.gearBtn:Show()
+            f.gearBtn:ClearAllPoints(); f.gearBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y - 24); f.gearBtn:Show()
             if #now > 0 then
                 f.gearShopBtn:ClearAllPoints(); f.gearShopBtn:SetPoint("RIGHT", f.gearBtn, "LEFT", -6, 0); f.gearShopBtn:Show()
             end
-            P:Put(f.gearHead, 22, 24, 4)
+            P:Put(f.gearHead, 54, 24, 4)
             if #now == 0 then
                 f.gearNext:SetText("You wear better than you can make now.")
                 P:Put(f.gearNext, 16, 30, 4)
@@ -506,7 +528,7 @@ function PP:Refresh()
                 local r, it = f.gear[i], p.it
                 r.it = it
                 r.icon:SetTexture(self:Icon(it.id))
-                r.name:SetText("Make: " .. it.name)
+                r.name:SetText(it.name)
                 r.name:SetTextColor(unpack(PP.QualityColor(it.q)))
                 local wear = (it.level > lvl) and ("wear at level " .. it.level) or ("level " .. it.level)
                 r.sub:SetText((PP.SLOT_NAMES[it.slot] or "") .. "  -  " .. wear .. "  -  " .. self:GearSourceText(it))
@@ -537,7 +559,7 @@ function PP:Refresh()
     local showTrainers = false
     if not skill then
         f.secTrain:SetText("LEARN IT")
-        f.trainText:SetText("Learn " .. def.name .. " from a trainer:")
+        f.trainText:SetText("Visit a trainer")
         SetColor(f.trainText, C.white)
         showTrainers = true
     elseif nxt then
@@ -583,7 +605,7 @@ function PP:Refresh()
         local list = self:TrainersFor(def, trainerRank)
         for k = 1, math.min(2, #list) do
             local t = list[k]
-            f.trainers[k]:SetWho(t, t.junior and (def.key == "mining" and "  (no smelting)" or "  (Apprentice only)") or nil)
+            f.trainers[k]:SetWho(t, (t.junior and skill) and (def.key == "mining" and "  (no smelting)" or "  (low ranks)") or nil)
             P:Put(f.trainers[k], 42, 36, 6)
         end
     end
@@ -676,30 +698,42 @@ function PP:BuildGear()
     g:SetPoint("TOPRIGHT", self.frame, "TOPLEFT", -4, 0)
     g.sub = Text(g, 15, C.white, "CENTER"); g.sub:SetWidth(480)
     g.sub:SetPoint("TOP", g, "TOP", 0, -44)
+    g.scroll = CreateFrame("ScrollFrame", nil, g, "UIPanelScrollFrameTemplate")
+    g.scroll:SetPoint("TOPLEFT", g, "TOPLEFT", 0, -68)
+    g.scroll:SetPoint("BOTTOMRIGHT", g, "BOTTOMRIGHT", -24, 12)
+    g.body = CreateFrame("Frame", nil, g.scroll)
+    g.body:SetSize(516, 400)
+    g.scroll:SetScrollChild(g.body)
+    g.offset = 0
+    g.scroll:EnableMouseWheel(true)
+    g.scroll:SetScript("OnMouseWheel", function(_, delta)
+        g.offset = math.max(0, math.min(g.maxScroll or 0, (g.offset or 0) - delta * 48))
+        g.scroll:SetVerticalScroll(g.offset)
+    end)
     g.rows = {}
     for i = 1, 12 do
-        local r = CreateFrame("Button", nil, g)
+        local r = CreateFrame("Button", nil, g.body)
         r:SetSize(480, 50)
         r.slot = Text(r, 14, C.gold); r.slot:SetPoint("TOPLEFT", r, "TOPLEFT", 0, -2); r.slot:SetWidth(80)
         r.icon = Icon(r, 32); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 84, 0)
-        r.name = Text(r, 15, C.white); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 8, -1); r.name:SetWidth(270)
+        r.name = Text(r, 15, C.white); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 8, -1); r.name:SetWidth(240)
         r.state = Text(r, 14, C.green, "RIGHT"); r.state:SetPoint("TOPRIGHT", r, "TOPRIGHT", 0, -2); r.state:SetWidth(110)
-        r.list = Button(r, "What I need", 110, 24, function()
+        r.list = Button(r, "Materials", 110, 24, function()
             if r.craft then PP:CraftGear(r.it) else PP:ShowGearShop({ r.it }) end
         end)
         r.list:SetPoint("TOPRIGHT", r, "TOPRIGHT", 0, -20)
-        r.sub = Text(r, 13, C.gray); r.sub:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -2); r.sub:SetWidth(380)
+        r.sub = Text(r, 13, C.gray); r.sub:SetPoint("TOPLEFT", r, "TOPLEFT", 124, -48); r.sub:SetWidth(350)
         r:SetScript("OnEnter", function(self) PP:GearTooltip(self, self.it) end)
         r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
         r:Hide()
         g.rows[i] = r
     end
-    g.empty = Text(g, 15, C.gray); g.empty:SetWidth(480)
-    g.key = Text(g, 13, C.gray); g.key:SetWidth(480)
+    g.empty = Text(g.body, 15, C.gray); g.empty:SetWidth(480)
+    g.key = Text(g.body, 13, C.gray); g.key:SetWidth(480)
     g.key:SetText("Picked by stats for your class and role. Hover an item for details.")
-    g.campHead = Text(g, 15, C.gold); g.campHead:SetWidth(480); g.campHead:Hide()
-    g.shopAll = Button(g, "Shopping list for everything marked Make it!", 400, 30, function() PP:ShowGearShopAll() end)
-    g.camp = PersonRow(g)
+    g.campHead = Text(g.body, 15, C.gold); g.campHead:SetWidth(480); g.campHead:Hide()
+    g.shopAll = Button(g.body, "All Materials", 400, 30, function() PP:ShowGearShopAll() end)
+    g.camp = PersonRow(g.body)
     g:SetScript("OnShow", function() PP:RefreshGear() end)
     g:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
     g:SetScale(self.db.scale or 1)
@@ -715,7 +749,7 @@ function PP:RefreshGear()
     for _, r in ipairs(g.rows) do r:Hide() end
     g.empty:Hide()
     local rows = (def and skill) and self:GearBySlot(def, skill) or {}
-    local y = -72
+    local y = -8
     local needCamp = false
     g.camp:Hide(); g.campHead:Hide()
     for i, row in ipairs(rows) do
@@ -740,7 +774,7 @@ function PP:RefreshGear()
         end
         if it.plan or (row.better and row.better.it.plan) then needCamp = true end
         r.craft = row.now and p == row.now and self:CanCraft(it)
-        r.list:SetText(r.craft and "Craft it" or "What I need")
+        r.list:SetText(r.craft and "Craft it" or "Materials")
         r.list:SetLabelColor(r.craft and C.green or C.gold)
         r.sub:SetText(sub)
         if row.now and row.now.upgrade then
@@ -752,29 +786,41 @@ function PP:RefreshGear()
         else
             r.state:SetText("At skill " .. it.skill); SetColor(r.state, C.orange)
         end
-        r:ClearAllPoints(); r:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y); r:Show()
-        y = y - 50 - extra
+        r:ClearAllPoints(); r:SetPoint("TOPLEFT", g.body, "TOPLEFT", 30, y); r:Show()
+        local textHeight = r.sub:GetStringHeight()
+        if type(textHeight) ~= "number" then textHeight = 14 + extra end
+        local rowHeight = math.max(68, 54 + textHeight)
+        r:SetHeight(rowHeight)
+        y = y - rowHeight - 8
     end
     if #rows == 0 then
         g.empty:SetText(skill and "Nothing here for your class right now." or "Learn this profession first.")
-        g.empty:ClearAllPoints(); g.empty:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y); g.empty:Show()
+        g.empty:ClearAllPoints(); g.empty:SetPoint("TOPLEFT", g.body, "TOPLEFT", 30, y); g.empty:Show()
         y = y - 30
     end
     local camp = needCamp and self:FavorCamp()
     if camp then
         g.campHead:SetText("Plans for Merchant's Favor (you have " .. self:FavorHave() .. "):")
-        g.campHead:ClearAllPoints(); g.campHead:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y - 4); g.campHead:Show()
+        g.campHead:ClearAllPoints(); g.campHead:SetPoint("TOPLEFT", g.body, "TOPLEFT", 30, y - 4); g.campHead:Show()
         g.camp:SetWho(camp)
-        g.camp:ClearAllPoints(); g.camp:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y - 26); g.camp:Show()
+        g.camp:ClearAllPoints(); g.camp:SetPoint("TOPLEFT", g.body, "TOPLEFT", 30, y - 26); g.camp:Show()
         y = y - 74
     end
     g.shopAll:Hide()
     if def and skill and #self:GearShopAllItems(def, skill) > 0 then
-        g.shopAll:ClearAllPoints(); g.shopAll:SetPoint("TOP", g, "TOPLEFT", 270, y - 6); g.shopAll:Show()
+        g.shopAll:ClearAllPoints(); g.shopAll:SetPoint("TOP", g.body, "TOPLEFT", 270, y - 6); g.shopAll:Show()
         y = y - 44
     end
-    g.key:ClearAllPoints(); g.key:SetPoint("TOPLEFT", g, "TOPLEFT", 30, y - 4); g.key:Show()
-    g:SetHeight(-y + 44)
+    g.key:ClearAllPoints(); g.key:SetPoint("TOPLEFT", g.body, "TOPLEFT", 30, y - 4); g.key:Show()
+    local content = -y + 40
+    local screen = UIParent.GetHeight and UIParent:GetHeight() or 900
+    if type(screen) ~= "number" or screen <= 0 then screen = 900 end
+    local height = math.min(content + 80, math.max(240, screen / (self.db.scale or 1) - 90))
+    g:SetHeight(height)
+    g.body:SetHeight(content)
+    g.maxScroll = math.max(0, content - (height - 80))
+    g.offset = math.min(g.offset or 0, g.maxScroll)
+    g.scroll:SetVerticalScroll(g.offset)
 end
 
 -- ---------- gear shopping list: everything one piece (or all picks) needs ----------
@@ -783,14 +829,27 @@ function PP:BuildGearShop()
     local w = Window("ProfessionPalGearShop", SHOPW, "What You Need")
     self.gearShop = w
     w:SetPoint("TOPLEFT", self.frame, "TOPRIGHT", 4, 0)
-    w.head = Text(w, 16, C.white); w.head:SetWidth(SHOPW - 60)
-    w.forText = Text(w, 14, C.gray); w.forText:SetWidth(SHOPW - 60)
-    w.status = Text(w, 16, C.green); w.status:SetWidth(SHOPW - 60)
-    w.matHead = Text(w, 16, C.gold); w.matHead:SetText("MATERIALS")
-    w.planHead = Text(w, 16, C.gold); w.planHead:SetText("RECIPES TO GET FIRST")
+    w.scroll = CreateFrame("ScrollFrame", nil, w, "UIPanelScrollFrameTemplate")
+    w.scroll:SetPoint("TOPLEFT", w, "TOPLEFT", 0, -42)
+    w.scroll:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -24, 12)
+    local body = CreateFrame("Frame", nil, w.scroll)
+    body:SetSize(SHOPW - 24, 400)
+    w.body = body
+    w.scroll:SetScrollChild(body)
+    w.offset = 0
+    w.scroll:EnableMouseWheel(true)
+    w.scroll:SetScript("OnMouseWheel", function(_, delta)
+        w.offset = math.max(0, math.min(w.maxScroll or 0, (w.offset or 0) - delta * 48))
+        w.scroll:SetVerticalScroll(w.offset)
+    end)
+    w.head = Text(body, 16, C.white); w.head:SetWidth(SHOPW - 60)
+    w.forText = Text(body, 14, C.gray); w.forText:SetWidth(SHOPW - 60)
+    w.status = Text(body, 16, C.green); w.status:SetWidth(SHOPW - 60)
+    w.matHead = Text(body, 16, C.gold); w.matHead:SetText("MATERIALS")
+    w.planHead = Text(body, 16, C.gold); w.planHead:SetText("RECIPES")
     w.rows = {}
-    for i = 1, 30 do
-        local r = CreateFrame("Frame", nil, w)
+    for i = 1, 120 do
+        local r = CreateFrame("Frame", nil, body)
         r:SetSize(SHOPW - 60, 40)
         r.icon = Icon(r, 32); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
         r.name = Text(r, 15, C.white); r.name:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 10, -1); r.name:SetWidth(SHOPW - 230)
@@ -799,12 +858,12 @@ function PP:BuildGearShop()
         r:Hide()
         w.rows[i] = r
     end
-    w.camp = PersonRow(w)
-    w.craftBtn = Button(w, "Craft it", 180, 34, function() PP:CraftGear(w.items and w.items[1]) end)
+    w.camp = PersonRow(body)
+    w.craftBtn = Button(body, "Craft it", 180, 34, function() PP:CraftGear(w.items and w.items[1]) end)
     w.craftBtn:SetLabelColor(C.green)
-    w.craftWhere = Text(w, 14, C.white); w.craftWhere:SetWidth(SHOPW - 260)
-    w.note = Text(w, 14, C.yellow); w.note:SetWidth(SHOPW - 60)
-    w.key = Text(w, 13, C.gray); w.key:SetWidth(SHOPW - 60)
+    w.craftWhere = Text(body, 14, C.white); w.craftWhere:SetWidth(SHOPW - 260)
+    w.note = Text(body, 14, C.yellow); w.note:SetWidth(SHOPW - 60)
+    w.key = Text(body, 13, C.gray); w.key:SetWidth(SHOPW - 60)
     w.key:SetText("Green = you have enough. Counts include your bags and bank.")
     w:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
     w:SetScale(self.db.scale or 1)
@@ -816,6 +875,7 @@ function PP:ShowGearShop(items, isAll)
     if not items or #items == 0 then return end
     if not self.gearShop then self:BuildGearShop() end
     self.gearShop.items, self.gearShop.isAll = items, isAll
+    self.gearShop.offset = 0
     if self.gearShop:IsShown() then self:RefreshGearShop() else self.gearShop:Show() end
 end
 
@@ -839,7 +899,20 @@ function PP:RefreshGearShop()
     local items = w.items or {}
     for _, r in ipairs(w.rows) do r:Hide() end
     for _, k in ipairs({ "head", "forText", "status", "matHead", "planHead", "camp", "note", "craftBtn", "craftWhere" }) do w[k]:Hide() end
-    local P = Placer(w, -50)
+    local body = w.body
+    local P = Placer(body, -10)
+    local function fit()
+        local content = -P.y + 38
+        local screen = UIParent.GetHeight and UIParent:GetHeight() or 900
+        if type(screen) ~= "number" or screen <= 0 then screen = 900 end
+        local cap = math.max(240, screen / (self.db.scale or 1) - 90)
+        local height = math.min(content + 54, cap)
+        w:SetHeight(height)
+        body:SetHeight(content)
+        w.maxScroll = math.max(0, content - (height - 54))
+        w.offset = math.min(w.offset or 0, w.maxScroll)
+        w.scroll:SetVerticalScroll(w.offset)
+    end
     local function slotName(it) return PP.SLOT_NAMES[it.slot] or "" end
 
     -- what this list is for
@@ -847,8 +920,8 @@ function PP:RefreshGearShop()
         w.title:SetText("Shopping List")
         w.head:SetText("Nothing to make right now. Your gear is as good as what you can craft.")
         P:Put(w.head, P:TextH(w.head, 18), 30, 8)
-        w.key:ClearAllPoints(); w.key:SetPoint("TOPLEFT", w, "TOPLEFT", 30, P.y); w.key:Show()
-        w:SetHeight(-P.y + 40)
+        w.key:ClearAllPoints(); w.key:SetPoint("TOPLEFT", body, "TOPLEFT", 30, P.y); w.key:Show()
+        fit()
         return
     end
     if #items == 1 then
@@ -859,7 +932,7 @@ function PP:RefreshGearShop()
         P:Put(w.head, P:TextH(w.head, 18), 30, 6)
     else
         w.title:SetText("Shopping List - All Picks")
-        w.head:SetText("To make all " .. #items .. " pieces I recommend right now:")
+        w.head:SetText(#items .. " recommended pieces")
         SetColor(w.head, C.white)
         P:Put(w.head, P:TextH(w.head, 18), 30, 4)
         local names = {}
@@ -872,11 +945,11 @@ function PP:RefreshGearShop()
     local missing = 0
     for _, m in ipairs(mats) do if not m.sub and m.have < m.need then missing = missing + 1 end end
     if #mats > 0 then
-        if missing == 0 then
-            w.status:SetText("You have everything. Go craft it!")
+        if missing == 0 and #plans == 0 and #nomats == 0 then
+            w.status:SetText("Materials ready")
             SetColor(w.status, C.green)
         else
-            w.status:SetText("You still need " .. missing .. (missing == 1 and " thing." or " things."))
+            w.status:SetText(#plans > 0 and "Recipe needed" or (#nomats > 0 and "Open profession to check materials" or ("Missing " .. missing .. " materials")))
             SetColor(w.status, C.orange)
         end
         P:Put(w.status, 20, 30, 10)
@@ -908,11 +981,10 @@ function PP:RefreshGearShop()
                 local camp = self:FavorCamp()
                 r.count:SetText(it.plan.cost .. " Favor")
                 SetColor(r.count, have >= it.plan.cost and C.green or C.red)
-                r.where:SetText("Buy it with Merchant's Favor at " .. (camp and (camp.p .. " (" .. camp.n .. ")") or "the trade camp")
-                    .. ". You have " .. have .. " Favor. To get more, fill Waylaid Crates (rare mob drops, or buy them on the Auction House) and hand them in at the camp.")
+                r.where:SetText((camp and camp.p or "Trade camp") .. " | Favor: " .. have .. "/" .. it.plan.cost)
             else
                 r.count:SetText("")
-                r.where:SetText("Trainers don't teach this one. It drops from mobs or is sold by a special vendor. Look it up on Wowhead, or check the Auction House.")
+                r.where:SetText("Vendor or drop recipe. Check Wowhead for the source.")
             end
             local h = math.max(40, 22 + P:TextH(r.where, 14))
             P:Put(r, h, 30, 8)
@@ -957,8 +1029,8 @@ function PP:RefreshGearShop()
         P:Put(w.note, P:TextH(w.note, 16), 30, 8)
     end
 
-    w.key:ClearAllPoints(); w.key:SetPoint("TOPLEFT", w, "TOPLEFT", 30, P.y - 2); w.key:Show()
-    w:SetHeight(-P.y + 40)
+    w.key:ClearAllPoints(); w.key:SetPoint("TOPLEFT", body, "TOPLEFT", 30, P.y - 2); w.key:Show()
+    fit()
 end
 
 function PP:ToggleGear()

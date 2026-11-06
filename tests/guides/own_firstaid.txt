@@ -1,0 +1,5 @@
+My First Aid guide
+1-40 | Linen Bandage | 45 | 45x Linen Cloth
+40-80 | Heavy Linen Bandage | 50 | 100x Linen Cloth
+80-115 Wool Bandage x45 45 Wool Cloth
+115 - 150 : Heavy Wool Bandage, 50, 100 x Wool Cloth

@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.2.7 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.2.8 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -30,6 +30,7 @@ Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherwork
 
 ## What's new
 
+- **1.2.8:** New charcoal-and-gold look, clearer text and a highlighted next step. Gear windows scroll. Fixed crafting checks, early armor recommendations, and imported shopping totals.
 - **1.2.7:** When you have all the materials for a gear piece, its button turns into a green "Craft it". Click once to open your profession at that recipe, click again to make it. It also tells you where to stand (anvil, cooking fire...).
 - **1.2.6:** Every gear pick has a "What I need" button: a shopping list with have/need and where to get each material. "Shop for All" adds up everything for all the pieces it recommends.
 - **1.2.5:** Gear picks now know about Merchant's Favor plans and rare materials (like Pristine Leather). If you can't make a piece yet, you get one you can make now, plus a "Better:" line that says what the better piece needs and where to get it.
@@ -67,3 +68,9 @@ Known limits: crafting steps above skill 225 come from Wowhead's planner and hav
 ## Data
 
 Built from the [Icy Veins WoW: Forever profession guides](https://www.icy-veins.com/wow-forever/professions-overview) for all 12 professions and the [Wowhead WoW: Forever](https://www.wowhead.com/forever/guides/professions) item database.
+
+## Code review
+
+Crafting checks bag materials and this character's recipes. Gear and shopping windows scroll. Current gear picks respect your level. See [review findings](REVIEW.md) for fixes, tests, and remaining limits.
+
+Visual refresh: charcoal navy panels, warm gold accents, clear body text, a highlighted next step, and wider tracker rows. Included in 1.2.8.

@@ -1,4 +1,4 @@
-ProfessionPal 1.2.7 (beta)  -  a profession leveling guide for WoW: Forever
+ProfessionPal 1.2.8 (beta)  -  a profession leveling guide for WoW: Forever
 ==========================================================================
 
 Every profession, skill 1 to 300, inside the game. Type /prof.
@@ -64,3 +64,5 @@ This is a test build. If something looks wrong, send a screenshot.
 To see Lua errors in game, type:  /console scriptErrors 1
 Known limits: crafting steps above 225 come from Wowhead's planner and
 are not tested live yet; gear picks are ranked by item stats.
+
+1.2.8: New charcoal-and-gold look, clearer text, scrollable gear lists, and fixes for crafting and shopping totals. Update, then /reload.
