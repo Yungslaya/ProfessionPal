@@ -29,7 +29,7 @@ TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Copper Vein'}}})
 local n=P.harvestNavigation
 assert(n and n.name=='Copper Vein' and n.source=='minimap' and not n.confirmed,'minimap hint provenance')
 assert(math.abs(n.x-.55)<.000001 and math.abs(n.y-.5)<.000001,'minimap coordinate transform')
-assert(not P.db.harvestNodes or #(P.db.harvestNodes[map] or {})==0,'hover alone must not save a confirmed spot')
+assert(#P.db.harvestNodes[map]==1 and P.db.harvestNodes[map][1].source=='minimap','hover saves an approximate historical sighting')
 P.harvestArrow.pic.SetRotation=function(self,a) self.angle=a end
 P:HarvestGuideUpdate()
 assert(math.abs(P.harvestArrow.pic.angle+math.pi/2)<.00001,'east points right')
@@ -64,11 +64,60 @@ FIRE('ZONE_CHANGED_NEW_AREA'); P:HarvestScan(); P:HarvestGuideUpdate()
 assert(P.harvestNavigation and not P.harvestNavigation.confirmed,'arrival alone is not live confirmation')
 HARVEST_TIME=HARVEST_TIME+13; P:HarvestGuideUpdate()
 assert(not P.harvestNavigation,'unconfirmed spot stops nagging after wait')
-assert(#P.db.harvestNodes[map]==1,'unconfirmed spot not deleted')
+assert(P.db.harvestNodes[map][1].name=='Copper Vein','unconfirmed spot not deleted')
 -- Different character profession: never guide a herbalist to stored ore.
 STATE.profs={{name='Herbalism',line=182,rank=100,max=300}}; FIRE('SKILL_LINES_CHANGED')
 px=.42; FIRE('ZONE_CHANGED_NEW_AREA'); P:HarvestGuideUpdate()
 assert(not P.harvestNavigation,'history filtered by current character profession')
+-- Combined node names must not be treated as one unknown node or flicker by order.
+over=true; px=.5; py=.5; cx=150; cy=100
+P:HarvestGuideCommand('debug on')
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Peacebloom\nSilverleaf'}}})
+-- Invisible spaces, named colors, embedded textures and links must still match.
+for _,name in ipairs({'\194\160Silverleaf\194\160','|cnGREEN_FONT_COLOR:Silverleaf|r',
+    '|TInterface\\Icons\\INV_Misc_Herb_10:12|tSilverleaf',
+    '|Hthing:1|hSilverleaf|h','\226\128\139Silverleaf'}) do
+    TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText=name}}})
+    assert(P.harvestNavigation.name=='Silverleaf','formatted Silverleaf missed')
+end
+for _,name in ipairs({'Silverleaf (Above)','Silverleaf (Below)',
+    'Silverleaf [Above]','\226\150\178 Silverleaf','Silverleaf \226\150\188'}) do
+    TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText=name}}})
+    assert(P.harvestNavigation.name=='Silverleaf','elevated node name missed')
+end
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Peacebloom\nSilverleaf'}}})
+local chosen=P.harvestNavigation.name
+assert(chosen=='Peacebloom' or chosen=='Silverleaf','stacked tooltip not recognized')
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Silverleaf\nPeacebloom'}}})
+assert(P.harvestNavigation.name==chosen,'stacked tooltip order changed selection')
+assert(not P.harvestNodeDebug.last:find('Unrecognized'),'recognized stack reported unknown')
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Earthroot'}}})
+assert(P.harvestNavigation.name=='Earthroot','new hover failed to replace previous node')
+P:HarvestGuideCommand('debug off')
+-- Historical pins survive navigation clearing, and never appear on another zone map.
+WorldMapFrame=CreateFrame('Frame'); local canvas=CreateFrame('Frame')
+WorldMapFrame.GetCanvas=function() return canvas end
+WorldMapFrame.GetMapID=function() return map end
+canvas.GetWidth=function() return 1000 end; canvas.GetHeight=function() return 800 end
+Minimap:Show(); rotate='0'; px=.5; py=.5
+P.db.harvestNodes[map]={{map=map,name='Earthroot',kind='herbalism',x=.55,y=.5}}
+P:HarvestPinsUpdate()
+assert(P.harvestMapPins[1]:IsShown() and P.harvestMiniPins[1]:IsShown(),'map and minimap historical markers')
+local point=P.harvestMiniPins[1]._points[1]
+assert(math.abs(point[4]-50)<.001 and math.abs(point[5])<.001,'minimap marker coordinate')
+rotate='1'; facing=math.pi/2; P:HarvestPinsUpdate()
+point=P.harvestMiniPins[1]._points[1]
+assert(math.abs(point[4])<.001 and math.abs(point[5]+50)<.001,'rotating minimap marker')
+WorldMapFrame.GetMapID=function() return 999999 end; P:HarvestPinsUpdate()
+assert(not P.harvestMapPins[1]:IsShown(),'wrong world map marker hidden')
+P:HarvestGuideCommand('guide off'); P:HarvestPinsUpdate()
+assert(P.harvestMiniPins[1]:IsShown(),'markers should remain with guidance off')
+P:HarvestGuideCommand('markers off')
+assert(not P.harvestMiniPins[1]:IsShown() and #P.db.harvestNodes[map]==1,'hide markers preserves history')
+P:HarvestGuideCommand('markers on')
+assert(P.harvestMiniPins[1]:IsShown(),'marker setting restores pins')
+px=S; P:HarvestPinsUpdate(); assert(not P.harvestMiniPins[1]:IsShown(),'restricted position never guessed')
+px=.5
 STATE.combat=true; P:HarvestGuideUpdate(); assert(not P.harvestArrow:IsShown(),'arrow hidden in combat')
 STATE.combat=false
 SlashCmdList.PROFESSIONPAL('harvest guide off'); assert(not P.harvestArrow:IsShown(),'guide off')

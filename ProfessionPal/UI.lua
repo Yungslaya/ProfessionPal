@@ -1076,7 +1076,12 @@ function PP:BuildSettings()
     local function AddCheck(label, field)
         local c = Check(s, label,
             function() return PP.db[field] end,
-            function(v) PP.db[field] = v end)
+            function(v)
+                PP.db[field] = v
+                if field=="harvestGuide" or field=="harvestGuideDetails" or field=="harvestAlert" then
+                    if PP.HarvestGuideUpdate then PP:HarvestGuideUpdate() end
+                elseif field=="harvestMarkers" and PP.HarvestPinsUpdate then PP:HarvestPinsUpdate() end
+            end)
         c:SetPoint("TOPLEFT", s, "TOPLEFT", 24, y)
         y = y - 40
         s.checks[#s.checks + 1] = c
@@ -1164,7 +1169,9 @@ function PP:BuildSettings()
     head:SetText("ON-SCREEN TRACKER")
     y = y - 34
     AddCheck("Show harvest reminders (herbs, ore, skinning)", "harvestAlert")
-    AddCheck("Guide to saved herb and ore spots", "harvestGuide")
+    AddCheck("Show node direction and distance", "harvestGuide")
+    AddCheck("Show detailed node text", "harvestGuideDetails")
+    AddCheck("Saved node map markers", "harvestMarkers")
     AddCheck("Show the tracker", "tracker")
     AddCheck("Hide it in combat", "trackerHideCombat")
     AddCheck("Lock the tracker", "trackerLocked")

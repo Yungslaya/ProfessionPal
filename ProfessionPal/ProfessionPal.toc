@@ -3,7 +3,7 @@
 ## Title: ProfessionPal
 ## Notes: Simple profession leveling guide for all professions. Type /prof
 ## Author: ProfessionPal
-## Version: 1.2.9
+## Version: 1.2.10
 ## SavedVariables: ProfessionPalDB
 ## OptionalDeps: TomTom
 ## IconTexture: Interface\Icons\Trade_Mining

@@ -258,6 +258,38 @@ end
 
 do -- Remember discovered herb/ore spots. Historical spots are never presented as live nodes.
     local names = {}
+    local function nodeName(value)
+        -- Only normalize readable text. Never inspect restricted tooltip values.
+        value=text(value)
+        if not value then return nil end
+        value=value:gsub("|T.-|t",""):gsub("|A.-|a","")
+            :gsub("|H.-|h(.-)|h","%1"):gsub("|cn[%w_]+:","")
+            :gsub("\194\160"," "):gsub("\226\128\175"," ")
+            :gsub("\226\128\139",""):gsub("\239\187\191","")
+            :gsub("[%z\1-\8\11\12\14-\31\127]","")
+        -- Elevation labels belong to the minimap blip, not the herb name.
+        value=value:gsub("\226\150\178", ""):gsub("\226\150\188", "")
+            :gsub("\226\134\145", ""):gsub("\226\134\147", "")
+        value=value:match("^%s*(.-)%s*$")
+        local base,level=value:match("^(.-)%s*%(([%a%s]+)%)$")
+        if not base then base,level=value:match("^(.-)%s*%[([%a%s]+)%]$") end
+        if level then
+            level=level:lower():match("^%s*(.-)%s*$")
+            if level=="above" or level=="below" or level=="higher" or level=="lower" then
+                value=base:match("^%s*(.-)%s*$")
+            end
+        end
+        return value
+    end
+    local nodeDebug = {enabled=false, entries={}}
+    PP.harvestNodeDebug = nodeDebug
+    local function trace(reason)
+        if not nodeDebug.enabled or nodeDebug.last==reason then return end
+        nodeDebug.last=reason
+        local entries=nodeDebug.entries
+        entries[#entries+1]=reason
+        if #entries>12 then table.remove(entries,1) end
+    end
     local function add(kind, list)
         for _, name in ipairs(list) do names[name:lower()] = kind end
     end
@@ -335,6 +367,7 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         -- An in-reach player's position is within gathering distance of the node.
         -- This is deliberately labelled approximate, never a precise node coordinate.
         found.x,found.y,found.map=p.x,p.y,p.map
+        found.source=nil -- close-range detection replaces the old minimap-only provenance
         found.required=state.required or found.required
         found.observedAt=read(time) or 0
         goal=found; skipped[found]=nil; arrived=nil; searchAt=0
@@ -360,29 +393,73 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         local north=radius*(dx*math.sin(facing)+dy*math.cos(facing))
         local x,y=p.x+east/p.w,p.y-north/p.h
         if x<0 or x>1 or y<0 or y>1 then return nil end
-        return {map=p.map,x=x,y=y,expires=now()+90,source="minimap"}
+        return {map=p.map,x=x,y=y,w=p.w,h=p.h,expires=now()+90,source="minimap"}
     end
     function PP:HarvestMinimapHint(data)
-        if not self.db or self.db.harvestAlert==false or self.db.harvestGuide==false or read(InCombatLockdown)==true then return end
-        if hidden(data) or type(data)~="table" or hidden(data.lines) or type(data.lines)~="table" then return end
-        local p=minimapSpot(); if not p then return end
+        if not self.db or self.db.harvestAlert==false or self.db.harvestGuide==false then trace("Node guide or harvest reminders are off"); return end
+        if read(InCombatLockdown)==true then trace("Paused in combat"); return end
+        if hidden(data) or type(data)~="table" or hidden(data.lines) or type(data.lines)~="table" then trace("Tooltip data unavailable"); return end
+        if now()>=refreshAt then refreshSkills() end
+        local p=minimapSpot(); if not p then trace("Minimap position unavailable: check hover, map, zoom and rotation"); return end
+        local candidates, seen, missing, unknown = {}, {}, nil, nil
         for _, l in ipairs(data.lines) do
             if not hidden(l) and type(l)=="table" then
-                local name=text(l.leftText)
-                local kind=name and names[name:lower()]
-                if kind and skills[kind] then
-                    -- Do not mistake your party's named dots for known node names.
-                    local person=false
-                    for _,u in ipairs({"player","party1","party2","party3","party4","pet"}) do
-                        if read(UnitName,u)==name then person=true; break end
-                    end
-                    if not person then
-                        p.name,p.kind=name,kind; goal=p; arrived=nil
-                        self:HarvestGuideUpdate(); return
+                local value=text(l.leftText)
+                if value then
+                    -- Stacked minimap blips can share one multiline tooltip field.
+                    for line in value:gmatch("[^\r\n]+") do
+                        local name=nodeName(line)
+                        local kind=names[name:lower()]
+                        if kind and skills[kind] then
+                            local person=false
+                            for _,u in ipairs({"player","party1","party2","party3","party4","pet"}) do
+                                if read(UnitName,u)==name then person=true; break end
+                            end
+                            if not person and not seen[name] then
+                                seen[name]=true; candidates[#candidates+1]={name=name,kind=kind}
+                            end
+                        elseif kind then missing=kind
+                        elseif name~="" then
+                            unknown=name
+                            if nodeDebug.enabled then
+                                local bytes={}
+                                for i=1,math.min(#line,80) do bytes[#bytes+1]=string.format("%02X",line:byte(i)) end
+                                nodeDebug.rawUnknown=table.concat(bytes," ")
+                            end
+                        end
                     end
                 end
             end
         end
+        if #candidates==0 then
+            trace(missing and ("Profession not learned: "..missing)
+                or unknown and ("Unrecognized tooltip: "..unknown) or "No readable node name")
+            return
+        end
+        table.sort(candidates,function(a,b) return a.name<b.name end)
+        local chosen=candidates[1]
+        -- Keep the same herb while its name remains in a stacked tooltip.
+        if goal and goal.source=="minimap" and goal.map==p.map then
+            for _,candidate in ipairs(candidates) do
+                if candidate.name==goal.name then chosen=candidate; break end
+            end
+        end
+        p.name,p.kind=chosen.name,chosen.kind
+        -- A hover is a historical sighting, never proof a node is still present.
+        local records=list(p.map)
+        local found
+        for _,n in ipairs(records) do
+            if valid(n) and n.name==p.name and distance(p,n)<18 then found=n; break end
+        end
+        if not found and #records<300 then
+            found={name=p.name,kind=p.kind,map=p.map,x=p.x,y=p.y,source="minimap"}
+            records[#records+1]=found
+        end
+        if found then found.observedAt=read(time) or 0 end
+        if not goal or goal.name~=p.name or distance(p,goal)>18 then arrived=nil end
+        goal=p
+        trace("Tracking "..p.name.." (approximate minimap position)")
+        self:HarvestGuideUpdate()
     end
     function PP:HarvestGuideUpdate()
         if not self.db or self.db.harvestAlert==false or self.db.harvestGuide==false or read(InCombatLockdown)==true or read(UnitIsDeadOrGhost,"player")==true then quiet(); return end
@@ -406,11 +483,21 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         local detected=live and d<=25 and live.kind==goal.kind and live.name==goal.name
         if d<=10 and not detected then
             arrived=arrived or now()
-            if now()-arrived>12 then skipped[goal]=now()+90; goal=nil; arrived=nil; quiet(); return end
+            if now()-arrived>3 then
+                skipped[goal]=now()+600
+                for _,n in ipairs(list(p.map)) do
+                    if valid(n) and distance(p,n)<=18 then skipped[n]=now()+600 end
+                end
+                goal=nil; arrived=nil; quiet(); return
+            end
         else arrived=nil end
         local label=(detected and "" or goal.source=="minimap" and "Last seen: " or "Possible: ")..goal.name
         local status=detected and "Detected nearby" or d<=10 and "Search nearby - not confirmed"
             or ("~"..math.floor(d+0.5).." yd - "..(goal.source=="minimap" and "minimap sighting" or "saved spot"))
+        if not self.db.harvestGuideDetails then
+            label=goal.name
+            status=detected and "Nearby" or d<=10 and "Check nearby" or ("~"..math.floor(d+0.5).." yd")
+        end
         local key=label..status
         if key~=lastLabel then title:SetText(label); detail:SetText(status); lastLabel=key end
         title:SetTextColor(unpack(detected and live.status=="ready" and PP.C.green or PP.C.gold))
@@ -420,19 +507,98 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
             local bearing=math.atan2(east,north)
             arrow.pic:SetRotation(-(bearing+f)); arrow.pic:Show()
         else arrow.pic:Hide() end
+        arrow.pic:SetSize(self.db.harvestGuideDetails and 38 or 26,self.db.harvestGuideDetails and 38 or 26)
+        title:ClearAllPoints(); title:SetPoint("TOP",0,self.db.harvestGuideDetails and -42 or -29)
+        detail:ClearAllPoints(); detail:SetPoint("TOP",0,self.db.harvestGuideDetails and -64 or -49)
         arrow:Show()
         PP.harvestNavigation={name=goal.name,kind=goal.kind,source=detected and "live" or goal.source or "history",distance=d,confirmed=detected and true or false,x=goal.x,y=goal.y,map=goal.map}
     end
     function PP:HarvestGuideCommand(arg)
-        if arg=="guide off" then self.db.harvestGuide=false; quiet(); self:Print("Saved-node guidance off.")
+        if arg=="debug on" then nodeDebug.enabled=true; nodeDebug.last=nil; self:Print("Node debug on. Hover the node, then /prof harvest debug.")
+        elseif arg=="debug off" then nodeDebug.enabled=false; self:Print("Node debug off.")
+        elseif arg=="debug" then
+            self:Print("Node debug: "..(nodeDebug.enabled and "on" or "off").."; reminders="..tostring(self.db.harvestAlert).."; guide="..tostring(self.db.harvestGuide))
+            for _,line in ipairs(nodeDebug.entries) do self:Print(line) end
+            if nodeDebug.rawUnknown then self:Print("Last unknown tooltip bytes: "..nodeDebug.rawUnknown) end
+        elseif arg=="guide off" then self.db.harvestGuide=false; quiet(); self:Print("Saved-node guidance off.")
         elseif arg=="guide on" then self.db.harvestGuide=true; searchAt=0; self:HarvestGuideUpdate(); self:Print("Saved-node guidance on.")
         elseif arg=="skip" then if goal then skipped[goal]=now()+120 end; goal=nil; arrived=nil; quiet(); self:Print("Skipping this spot for two minutes.")
+        elseif arg=="markers off" then self.db.harvestMarkers=false; self:HarvestPinsUpdate(); self:Print("Saved node markers off.")
+        elseif arg=="markers on" then self.db.harvestMarkers=true; self:HarvestPinsUpdate(); self:Print("Saved node markers on.")
         elseif arg=="map" then
             local p=position(); local count=p and #list(p.map) or 0
             self:Print(count.." saved herb/ore spots in this zone. Hover a new minimap node to guide toward it; reaching a detected node saves the spot.")
         else return false end
         return true
     end
+
+    -- Historical markers are separate from the navigation goal and its expiry.
+    local mapPins, miniPins = {}, {}
+    PP.harvestMapPins,PP.harvestMiniPins=mapPins,miniPins
+    local function pin(pool,index,parent,node)
+        local f=pool[index]
+        if not f then
+            f=CreateFrame("Frame",nil,parent); f:SetSize(9,9); f:EnableMouse(false)
+            f.pic=f:CreateTexture(nil,"OVERLAY"); f.pic:SetAllPoints()
+            f.pic:SetTexture("Interface\\COMMON\\Indicator-Yellow")
+            pool[index]=f
+        end
+        f:SetParent(parent)
+        if node.kind=="herbalism" then f.pic:SetVertexColor(0.3,1,0.45,0.85)
+        else f.pic:SetVertexColor(1,0.7,0.2,0.85) end
+        f:ClearAllPoints(); f:Show(); return f
+    end
+    function PP:HarvestPinsUpdate()
+        for _,f in ipairs(mapPins) do f:Hide() end
+        for _,f in ipairs(miniPins) do f:Hide() end
+        if not self.db or self.db.harvestMarkers==false then return end
+        if now()>=refreshAt then refreshSkills() end
+        local map=WorldMapFrame
+        local canvas=map and map.GetCanvas and read(map.GetCanvas,map)
+        local id=map and map.GetMapID and read(map.GetMapID,map)
+        if canvas and numeric(id) and read(map.IsShown,map)==true then
+            local w,h=read(canvas.GetWidth,canvas),read(canvas.GetHeight,canvas)
+            if numeric(w) and numeric(h) and w>0 and h>0 then
+                local index=0
+                for _,n in ipairs(list(id)) do
+                    if valid(n) and skills[n.kind] then
+                        index=index+1
+                        pin(mapPins,index,canvas,n):SetPoint("CENTER",canvas,"TOPLEFT",n.x*w,-n.y*h)
+                    end
+                end
+            end
+        end
+        local p=position()
+        if not p or not Minimap or read(Minimap.IsShown,Minimap)~=true then return end
+        local radius=C_Minimap and read(C_Minimap.GetViewRadius)
+        local w,h=read(Minimap.GetWidth,Minimap),read(Minimap.GetHeight,Minimap)
+        if not numeric(radius) or radius<=0 or not numeric(w) or not numeric(h) or w<=0 or h<=0 then return end
+        local rotate=read((C_CVar and C_CVar.GetCVar) or GetCVar,"rotateMinimap")
+        if C_Minimap and read(C_Minimap.IsRotateMinimapIgnored)==true then rotate="0" end
+        if rotate~="0" and rotate~="1" then return end
+        local facing=rotate=="1" and read(GetPlayerFacing) or 0
+        if not numeric(facing) then return end
+        local index=0
+        for _,n in ipairs(list(p.map)) do
+            if valid(n) and skills[n.kind] then
+                local east,north=(n.x-p.x)*p.w,(p.y-n.y)*p.h
+                local dx=(east*math.cos(facing)+north*math.sin(facing))/radius
+                local dy=(-east*math.sin(facing)+north*math.cos(facing))/radius
+                -- Keep the entire marker inside a round minimap, including its border.
+                if dx*dx+dy*dy<0.88*0.88 then
+                    index=index+1
+                    pin(miniPins,index,Minimap,n):SetPoint("CENTER",Minimap,"CENTER",dx*w/2,dy*h/2)
+                end
+            end
+        end
+    end
+    local pinsDriver=CreateFrame("Frame")
+    local pinsTick=0
+    pinsDriver:SetScript("OnUpdate",function(_,dt)
+        pinsTick=pinsTick+dt
+        if pinsTick<0.25 then return end
+        pinsTick=0; PP:HarvestPinsUpdate()
+    end)
     local events=CreateFrame("Frame")
     for _,e in ipairs({"PLAYER_LOGIN","PLAYER_ENTERING_WORLD","ZONE_CHANGED_NEW_AREA","LOOT_CLOSED"}) do pcall(events.RegisterEvent,events,e) end
     events:SetScript("OnEvent",function(_,e)
@@ -453,6 +619,19 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
     events:SetScript("OnUpdate",function(_,dt)
         if not PP.db or PP.db.harvestGuide==false or PP.db.harvestAlert==false then return end
         tick=tick+dt; if tick<0.2 then return end; tick=0
+        -- Some minimap tooltip updates do not fire the data callback again.
+        -- Read only the visible tooltip while the pointer is over the minimap.
+        if Minimap and read(Minimap.IsMouseOver,Minimap)==true and GameTooltip and read(GameTooltip.IsShown,GameTooltip)==true then
+            local data=C_TooltipInfo and read(C_TooltipInfo.GetMinimapMouseover)
+            if data then PP:HarvestMinimapHint(data) end
+            local lines={}
+            for i=1,math.min(read(GameTooltip.NumLines,GameTooltip) or 0,12) do
+                local region=_G["GameTooltipTextLeft"..i]
+                local value=region and text(read(region.GetText,region))
+                if value then lines[#lines+1]={leftText=value} end
+            end
+            if not data and #lines>0 then PP:HarvestMinimapHint({lines=lines}) end
+        end
         PP:HarvestGuideUpdate()
     end)
     local typ=Enum and Enum.TooltipDataType and Enum.TooltipDataType.MinimapMouseover

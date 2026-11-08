@@ -77,6 +77,8 @@ local DEFAULTS = {
     locked = false,
     point = nil,          -- saved window position
     told = {},            -- [key..rank] = true : "time to train" chat note already shown
+    harvestGuideDetails = false, -- compact node name and distance by default
+    harvestMarkers = true, -- small historical herb/ore markers
     harvestGuide = false,  -- approximate guidance to previously discovered herb/ore spots
     harvestAlert = false,  -- display-only gathering reminders
     tracker = true,       -- small on-screen guide box
@@ -97,7 +99,7 @@ local DEFAULTS = {
 
 function PP:StarterSetup(restore)
     if not self.db or (self.InCombat and self:InCombat()) then self:Print("Change the setup after combat.");return false end
-    local keys={"scale","tracker","trackerAlpha","trackerScale","trackerLocked","trackerHideCombat","trackerButtons","harvestGuide","harvestAlert","showAll","gearHideHard","autoLearn"}
+    local keys={"scale","tracker","trackerAlpha","trackerScale","trackerLocked","trackerHideCombat","trackerButtons","harvestMarkers","harvestGuide","harvestGuideDetails","harvestAlert","showAll","gearHideHard","autoLearn"}
     if restore then
         if not self.db.starterBackup then return false end
         for key,value in pairs(self.db.starterBackup) do self.db[key]=value.value end

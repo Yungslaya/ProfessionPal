@@ -15,6 +15,7 @@ def load(seed=""):
 L=load()
 L.execute("""local p=ProfessionPal
 assert(p.db.tracker and p.db.trackerLocked and p.db.trackerHideCombat)
+assert(not p.db.harvestGuideDetails)
 assert(not p.db.trackerButtons and not p.db.harvestAlert and not p.db.harvestGuide and not p.db.autoLearn)
 assert(p.settings._h<=620,"settings exceed screen")
 """)
