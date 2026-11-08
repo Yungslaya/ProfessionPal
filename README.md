@@ -1,16 +1,5 @@
 # ProfessionPal
 
-## 1.2.10
-
-- Improved herb and ore detection when minimap tooltips contain stacked nodes, elevation labels or extra formatting.
-- Added small markers for saved herb and ore spots on the world map and minimap. Switch them off in Settings.
-- Made node directions more compact, with a setting for detailed text.
-- The guide moves on sooner when you reach an empty spot.
-
-Saved spots and minimap directions are approximate. They show previous sightings, so a node may be gone when you arrive. Your settings and saved spots are kept.
-
-Type `/reload` after updating, then open `/prof` for Settings.
-
 **Every profession in WoW: Forever, from skill 1 to 300, inside the game.**
 It reads your real skill, counts your bags and bank, and tells you the one thing to do next.
 
@@ -46,6 +35,8 @@ Use `/prof` for the guide and Settings. `/prof starter` previews the starter opt
 Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering, Enchanting, Cooking and First Aid.
 
 ## What's new
+
+- **1.2.10:** Added saved herb and ore map markers, smaller node directions, and fixes for overlapping and elevated nodes. Type `/reload` after updating.
 
 - **1.2.9:** Starter setup with optional extras, preserved existing preferences, and reversible presentation presets. See the release notes for fixes and validation.
 
