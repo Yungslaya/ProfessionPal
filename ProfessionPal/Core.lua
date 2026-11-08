@@ -77,21 +77,42 @@ local DEFAULTS = {
     locked = false,
     point = nil,          -- saved window position
     told = {},            -- [key..rank] = true : "time to train" chat note already shown
+    harvestGuide = false,  -- approximate guidance to previously discovered herb/ore spots
+    harvestAlert = false,  -- display-only gathering reminders
     tracker = true,       -- small on-screen guide box
     trackerAlpha = 0.6,   -- tracker background opacity
     trackerScale = 1.0,
-    trackerLocked = false,
+    trackerLocked = true,
     trackerHideCombat = true,
     trackerPoint = nil,
-    trackerButtons = true, -- spell buttons (Find Minerals, Smelting, ...) on the tracker
+    trackerButtons = false, -- spell buttons (Find Minerals, Smelting, ...) on the tracker
     role = "auto",         -- gear picks: auto / dps / tank / heal
     showAll = false,       -- show every profession tab, not only the ones you know
-    gearHideHard = false,  -- gear picks: hide pieces that need Favor plans or rare materials
+    gearHideHard = true,  -- gear picks: hide pieces that need Favor plans or rare materials
     autoLearn = false,     -- learn guide recipes when a trainer window is open (OFF by default)
     autoLearnMax = 10,     -- spending limit per trainer visit, in gold
     guides = {},           -- imported guides: [profession key] = { title, steps, kind }
     useGuide = {},         -- [profession key] = true : follow the imported guide
 }
+
+function PP:StarterSetup(restore)
+    if not self.db or (self.InCombat and self:InCombat()) then self:Print("Change the setup after combat.");return false end
+    local keys={"scale","tracker","trackerAlpha","trackerScale","trackerLocked","trackerHideCombat","trackerButtons","harvestGuide","harvestAlert","showAll","gearHideHard","autoLearn"}
+    if restore then
+        if not self.db.starterBackup then return false end
+        for key,value in pairs(self.db.starterBackup) do self.db[key]=value.value end
+        self.db.starterBackup=nil
+    else
+        local old={}
+        for _,key in ipairs(keys) do old[key]={value=self.db[key]};self.db[key]=DEFAULTS[key] end
+        self.db.starterBackup=self.db.starterBackup or old
+    end
+    if self.ApplyTrackerLook then self:ApplyTrackerLook() end
+    if self.RefreshSettings then self:RefreshSettings() end
+    self:RequestRefresh()
+    self:Print("Setup changed. /reload to finish applying it.")
+    return true
+end
 
 -- ---------- small safe helpers ----------
 local function pack(...) return { n = select("#", ...), ... } end
@@ -775,6 +796,9 @@ end)
 
 SLASH_PROFESSIONPAL1 = "/prof"
 SLASH_PROFESSIONPAL2 = "/professionpal"
-SlashCmdList.PROFESSIONPAL = function()
-    if PP.Toggle then PP:Toggle() end
+SlashCmdList.PROFESSIONPAL = function(msg)
+    local command, arg = (msg or ""):lower():match("^%s*(%S*)%s*(.-)%s*$")
+    if command == "starter" or command == "restore" then PP:StarterSetup(command=="restore")
+    elseif command == "harvest" and PP.HarvestCommand then PP:HarvestCommand(arg)
+    elseif PP.Toggle then PP:Toggle() end
 end

@@ -1046,17 +1046,22 @@ local function Check(parent, label, get, set)
     c.label:SetPoint("LEFT", c, "RIGHT", 6, 0)
     c.label:SetWidth(330)
     c.label:SetText(label)
-    c:SetScript("OnShow", function(self) self:SetChecked(get() and true or false) end)
+    c.refresh=function(self) self:SetChecked(get() and true or false) end
+    c:SetScript("OnShow",c.refresh)
     c:SetScript("OnClick", function(self) set(self:GetChecked() and true or false); PP:Refresh() end)
     return c
 end
 
 function PP:BuildSettings()
-    local s = Window("ProfessionPalSettings", 460, "ProfessionPal Settings")
-    self.settings = s
-    s:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    local y = -54
-    s.checks = {}
+    local outer = Window("ProfessionPalSettings", 490, "ProfessionPal Settings")
+    self.settings = outer
+    outer:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    outer:SetHeight(math.min(620,(UIParent:GetHeight() or 760)-80))
+    local scroll=CreateFrame("ScrollFrame",nil,outer,"UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT",0,-48);scroll:SetPoint("BOTTOMRIGHT",-30,20)
+    local s=CreateFrame("Frame",nil,scroll);s:SetWidth(460);scroll:SetScrollChild(s)
+    local y = -10
+    s.checks = {};outer.checks=s.checks
     for _, def in ipairs(self.professions) do
         if def.altSteps then
             local key = def.key
@@ -1126,6 +1131,11 @@ function PP:BuildSettings()
     AddCheck("Show all professions (not only mine)", "showAll")
     AddCheck("Gear: hide pieces that need plans or rare mats", "gearHideHard")
 
+    local starter=Button(s,"Use starter setup",190,30,function() PP:StarterSetup() end)
+    starter:SetPoint("TOPLEFT",24,y)
+    local restore=Button(s,"Restore my setup",190,30,function() PP:StarterSetup(true) end)
+    restore:SetPoint("LEFT",starter,"RIGHT",10,0);y=y-44
+
     -- auto-learn at the trainer (off by default) + spending limit
     local thead = Text(s, 16, C.gold)
     thead:SetPoint("TOPLEFT", s, "TOPLEFT", 24, y - 8)
@@ -1153,6 +1163,8 @@ function PP:BuildSettings()
     head:SetPoint("TOPLEFT", s, "TOPLEFT", 24, y - 8)
     head:SetText("ON-SCREEN TRACKER")
     y = y - 34
+    AddCheck("Show harvest reminders (herbs, ore, skinning)", "harvestAlert")
+    AddCheck("Guide to saved herb and ore spots", "harvestGuide")
     AddCheck("Show the tracker", "tracker")
     AddCheck("Hide it in combat", "trackerHideCombat")
     AddCheck("Lock the tracker", "trackerLocked")
@@ -1174,7 +1186,11 @@ function PP:BuildSettings()
     reset:SetPoint("TOPLEFT", s, "TOPLEFT", 24, y)
     y = y - 46
     s:SetHeight(-y + 24)
-    s:SetScript("OnShow", function() for _, set in ipairs(steppers) do set(0) end end)
+    function PP:RefreshSettings()
+        for _,c in ipairs(s.checks) do c:refresh() end
+        for _,set in ipairs(steppers) do set(0) end
+    end
+    outer:SetScript("OnShow",function() PP:RefreshSettings() end)
     if self.shop then self.shop:SetScale(self.db.scale or 1) end
 end
 

@@ -1,4 +1,5 @@
 local P = ProfessionPal
+P.db.gearHideHard = false -- this fixture intentionally examines a rare-plan upgrade
 C_CurrencyInfo = { GetCurrencyInfo = function() return { quantity = 12 } end }
 local lines = {}
 GameTooltip = { SetOwner = function() end, SetText = function(_, t) lines[#lines+1] = t end,

@@ -38,6 +38,7 @@ function Widget:GetChecked() return self._checked end
 function Widget:CreateFontString() local o = new("FontString", self); return o end
 function Widget:CreateTexture() local o = new("Texture", self); return o end
 function Widget:SetTexture(t) self._tex = t end
+function Widget:GetTexture() return self._tex end
 function Widget:GetFontString() if not self._fs then self._fs = new("FontString", self) end return self._fs end
 function Widget:RegisterEvent(e)
     if e == "BOGUS" then error("unknown event") end
@@ -184,3 +185,7 @@ C_Map.GetWorldPosFromMapPos = function(map, v)
   local w = WORLD[map]; if not w then return nil end
   return w[1], { x = w[2] + (v.x - 0.5) * 1000, y = w[3] + (v.y - 0.5) * 1000 }
 end
+
+-- Harvest reminders use the game clock but never interact with the world.
+HARVEST_TIME=1000
+function GetTime() return HARVEST_TIME end

@@ -15,6 +15,12 @@ No account needed. Beta 1.2.8 · for WoW: Forever (interface 16001)
 
 ---
 
+## Starter setup (starter setup)
+
+New installs use your learned professions, a locked tracker that hides in combat, automatic gear role selection, and simpler gear picks. Extra tracker spell buttons, harvest reminders, saved-node guidance and automatic trainer purchases start off. Guide imports and other options remain available.
+
+Use `/prof` for the guide and Settings. `/prof starter` previews the starter options; `/prof restore` restores your previous preferences. Imported guides, learned recipes, selected plans and saved gathering spots are retained. Existing users keep their settings. Settings now fit inside a scrolling window.
+
 ## What it does
 
 - **One next step.** "Make 25 × Bronze Warhammer" or "Mine Tin and Silver in Hillsbrad". Updates the moment you skill up.
@@ -30,6 +36,9 @@ Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherwork
 
 ## What's new
 
+- **1.2.9:** Starter setup with optional extras, preserved existing preferences, and reversible presentation presets. See the release notes for fixes and validation.
+
+- **1.2.9 (local test, not published):** Harvest reminders for your character's Mining, Herbalism and Skinning. A small floating icon shows the object and whether it is in reach, farther away, blocked or above your skill. Uses the game's nearby interaction target, mouseover or selected corpse; it does not scan the whole world. No gathering or setting changes happen automatically. New file: fully restart WoW to try it.
 - **1.2.8:** New charcoal-and-gold look, clearer text and a highlighted next step. No more overlapping text: same-size profession buttons, one-line trainer rows. Gear windows scroll. Fixed crafting checks, early armor recommendations, and imported shopping totals.
 - **1.2.7:** When you have all the materials for a gear piece, its button turns into a green "Craft it". Click once to open your profession at that recipe, click again to make it. It also tells you where to stand (anvil, cooking fire...).
 - **1.2.6:** Every gear pick has a "What I need" button: a shopping list with have/need and where to get each material. "Shop for All" adds up everything for all the pieces it recommends.
@@ -74,3 +83,30 @@ Built from the [Icy Veins WoW: Forever profession guides](https://www.icy-veins.
 Crafting checks bag materials and this character's recipes. Gear and shopping windows scroll. Current gear picks respect your level. See [review findings](REVIEW.md) for fixes, tests, and remaining limits.
 
 Visual refresh: charcoal navy panels, warm gold accents, clear body text, a highlighted next step, and wider tracker rows. Included in 1.2.8.
+
+## Harvest reminders (local 1.2.9 test)
+
+Learn Mining, Herbalism or Skinning. The reminder only shows matches for the current character's professions, and stays hidden during combat.
+
+- For nearby detection, enable **Interact Key** in WoW's **Options > Controls**. ProfessionPal does not change that setting itself.
+- You can also hover an object or select a skinnable corpse. The game's selected interaction object is used; resources outside that selection are not all scanned.
+- **In reach** requires a positive harvest cursor and range check. Unknown range is labelled as unconfirmed. A grey cursor is shown as blocked, without guessing why. Skill requirements are read from readable English tooltip text when available.
+- `/prof harvest test` shows a five-second preview.
+- `/prof harvest unlock` lets you drag the reminder. `/prof harvest lock` makes it click-through again.
+- `/prof harvest off` / `/prof harvest on` turn it off or on. There is also a checkbox in ProfessionPal Settings.
+- `/prof harvest reset` restores its starting position.
+
+Test near a herb, ore vein or a looted skinnable corpse, then move in and out of reach. This is a local test build; it has not been published to GitHub or the addon updater.
+
+### Saved-node arrow (local 1.2.9 test)
+
+- Hover a new herb/ore dot on your minimap once. Its name and an approximate direction arrow appear above your character. You can move the mouse away immediately.
+- When a nearby herb/ore node has a usable cursor and is in reach, ProfessionPal saves the approximate spot in its saved settings. It also learns the name. Hovering a dot alone does not save a confirmed gathering spot.
+- On later visits, saved nodes within 150 yards generate a **Possible** name and arrow automatically, with no hovering. Historical coordinates never prove a node is spawned.
+- A matching, detected nearby node changes the prompt to **Detected nearby**. If no live node is confirmed at the spot, the prompt says to search nearby, then pauses that spot rather than claiming it is empty.
+- The coordinate and distance estimates are approximate. The arrow stays separate from your quest/TomTom waypoint and does not move your character.
+- Skinning still uses live nearby detection; corpses are not saved as permanent node spawns.
+- `/prof harvest skip` skips the current spot for two minutes. `/prof harvest map` shows the saved count for this zone.
+- `/prof harvest guide off` / `guide on` control the arrow; there is also a **Guide to saved herb and ore spots** checkbox.
+
+Reload to test this extension. New live nodes are still limited by what the game exposes: this is historical guidance plus live nearby confirmation, not an unattended scan of undiscovered minimap dots. Nothing in this local test has been published.

@@ -1,8 +1,9 @@
 ## Interface: 16001
+## X-Curse-Project-ID: 1791033
 ## Title: ProfessionPal
 ## Notes: Simple profession leveling guide for all professions. Type /prof
 ## Author: ProfessionPal
-## Version: 1.2.8
+## Version: 1.2.9
 ## SavedVariables: ProfessionPalDB
 ## OptionalDeps: TomTom
 ## IconTexture: Interface\Icons\Trade_Mining
@@ -28,3 +29,4 @@ UI.lua
 Tracker.lua
 AutoLearn.lua
 Import.lua
+Harvest.lua
