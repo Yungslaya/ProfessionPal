@@ -297,7 +297,22 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
     add("herbalism", {"Peacebloom","Silverleaf","Earthroot","Mageroyal","Briarthorn","Stranglekelp","Bruiseweed","Wild Steelbloom","Grave Moss","Kingsblood","Liferoot","Fadeleaf","Goldthorn","Khadgar's Whisker","Wintersbite","Firebloom","Purple Lotus","Arthas' Tears","Sungrass","Blindweed","Ghost Mushroom","Gromsblood","Golden Sansam","Dreamfoil","Mountain Silversage","Plaguebloom","Icecap","Black Lotus"})
     local arrow, title, detail, goal, lastSave, arrived = nil, nil, nil, nil, nil, nil
     local skipped = {} -- transient cooldowns for visited spots, not proof they are empty
-    local tick, searchAt, lastLabel = 0, 0, nil
+    local pursuit, searchAt = nil, 0
+    local function dismissGoal(p)
+        if goal then
+            skipped[goal]=now()+600
+            local origin={x=goal.x,y=goal.y,w=p.w,h=p.h}
+            -- Also skip its persisted copy; expiry must not immediately select it again.
+            for _,n in ipairs((PP.db.harvestNodes or {})[p.map] or {}) do
+                if type(n)=="table" and n.name==goal.name and type(n.x)=="number" and type(n.y)=="number" then
+                    local dx,dy=(n.x-origin.x)*p.w,(n.y-origin.y)*p.h
+                    if dx*dx+dy*dy<18*18 then skipped[n]=now()+600 end
+                end
+            end
+        end
+        goal=nil; arrived=nil; pursuit=nil; searchAt=now()+2
+    end
+    local tick, lastLabel = 0, nil
     local function numeric(v) return not hidden(v) and type(v) == "number" and v == v end
     local function position()
         if not C_Map or not C_Map.GetMapWorldSize then return nil end
@@ -465,7 +480,10 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         if not self.db or self.db.harvestAlert==false or self.db.harvestGuide==false or read(InCombatLockdown)==true or read(UnitIsDeadOrGhost,"player")==true then quiet(); return end
         createArrow()
         local p=position(); if not p then quiet(); return end
-        if goal and (goal.map~=p.map or not canUse(goal) or (goal.expires and now()>goal.expires) or (skipped[goal] and now()<skipped[goal])) then goal=nil; arrived=nil end
+        if goal and goal.map==p.map and goal.expires and now()>goal.expires then
+            dismissGoal(p); quiet(); return
+        end
+        if goal and (goal.map~=p.map or not canUse(goal) or (skipped[goal] and now()<skipped[goal])) then goal=nil; arrived=nil; pursuit=nil end
         if not goal and now()>=searchAt then
             searchAt=now()+1
             local best=150 -- automatic reminders for previously discovered spots within 150 yards
@@ -478,7 +496,17 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         end
         if not goal then quiet(); return end
         local d=distance(p,goal)
-        if not goal.expires and d>180 then goal=nil; quiet(); return end
+        if d>180 then dismissGoal(p); quiet(); return end
+        if not pursuit or pursuit.name~=goal.name or pursuit.map~=goal.map
+            or math.abs(pursuit.x-goal.x)*p.w>18 or math.abs(pursuit.y-goal.y)*p.h>18 then
+            pursuit={name=goal.name,map=goal.map,x=goal.x,y=goal.y,best=d,progressAt=now()}
+        end
+        if d<pursuit.best-2 then pursuit.best=d; pursuit.progressAt=now(); pursuit.awayAt=nil end
+        if d>pursuit.best+15 then pursuit.awayAt=pursuit.awayAt or now()
+        else pursuit.awayAt=nil end
+        if (pursuit.awayAt and now()-pursuit.awayAt>=2) or now()-pursuit.progressAt>=20 then
+            dismissGoal(p); quiet(); return
+        end
         local live=PP.harvestState
         local detected=live and d<=25 and live.kind==goal.kind and live.name==goal.name
         if d<=10 and not detected then

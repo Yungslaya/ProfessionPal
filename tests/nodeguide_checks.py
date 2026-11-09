@@ -118,6 +118,29 @@ P:HarvestGuideCommand('markers on')
 assert(P.harvestMiniPins[1]:IsShown(),'marker setting restores pins')
 px=S; P:HarvestPinsUpdate(); assert(not P.harvestMiniPins[1]:IsShown(),'restricted position never guessed')
 px=.5
+-- Ignoring a hovered node clears its arrow without deleting its marker or reselecting it.
+P.db.harvestGuide=true; P.db.harvestNodes[map]={}; UNITS={}
+over=true; px=.5; py=.5; rotate='0'; cx=150; cy=100
+FIRE('ZONE_CHANGED_NEW_AREA')
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Silverleaf'}}})
+assert(P.harvestNavigation,'ignored-node test did not start')
+over=false; px=.47; P:HarvestGuideUpdate()
+HARVEST_TIME=HARVEST_TIME+2.1; P:HarvestGuideUpdate()
+assert(not P.harvestNavigation and not P.harvestArrow:IsShown(),'walking away left arrow stuck')
+HARVEST_TIME=HARVEST_TIME+3; P:HarvestGuideUpdate()
+assert(not P.harvestNavigation,'ignored saved copy immediately reacquired')
+assert(#P.db.harvestNodes[map]==1,'ignoring deleted marker')
+-- A fresh explicit hover can select a new sighting, but idle guidance expires too.
+over=true; px=.5
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Earthroot'}}})
+assert(P.harvestNavigation,'new sighting did not start')
+over=false; HARVEST_TIME=HARVEST_TIME+21; P:HarvestGuideUpdate()
+assert(not P.harvestNavigation,'stationary ignored arrow never expired')
+-- Distance cutoff applies to fresh minimap sightings as well as history.
+over=true; px=.5
+TOOLTIP_CALLBACKS[5](GameTooltip,{lines={{leftText='Peacebloom'}}})
+over=false; px=.3; P:HarvestGuideUpdate()
+assert(not P.harvestNavigation,'far-away minimap sighting retained arrow')
 STATE.combat=true; P:HarvestGuideUpdate(); assert(not P.harvestArrow:IsShown(),'arrow hidden in combat')
 STATE.combat=false
 SlashCmdList.PROFESSIONPAL('harvest guide off'); assert(not P.harvestArrow:IsShown(),'guide off')

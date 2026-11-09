@@ -294,7 +294,7 @@ local function HideAll(f)
         if f[k] then f[k]:Hide() end
     end
     for _, r in ipairs(f.gear or {}) do r:Hide() end
-    for _, r in ipairs(f.rows) do r:Hide() end
+    for _, r in ipairs(f.rows) do r:Hide(); if r.find then r.find:Hide() end end
     for _, z in ipairs(f.zones) do z:Hide() end
     for _, r in ipairs(f.trainers) do r:Hide() end
 end
@@ -464,6 +464,7 @@ function PP:Refresh()
                 r.name:SetText(m[3] or tostring(m[1]))
                 SetColor(r.name, C.white)
                 r.count:SetText(have .. " / " .. need)
+                if self.BindFarmRow then self:BindFarmRow(r,m[1]) end
                 SetColor(r.count, have >= need and C.green or C.red)
                 P:Put(r, 32, 30, 4)
             end
@@ -666,6 +667,7 @@ function PP:RefreshShop()
         if not r then break end
         r.icon:SetTexture(self:Icon(t.item))
         r.name:SetText(t.name .. (t.made and "  (you make)" or ""))
+        if self.BindFarmRow then self:BindFarmRow(r,t.item) end
         SetColor(r.name, t.made and C.gray or C.white)
         r.count:SetText(t.have .. " / " .. t.need)
         SetColor(r.count, t.have >= t.need and C.green or C.red)
@@ -1014,6 +1016,7 @@ function PP:RefreshGearShop()
             r.count:SetText(m.have .. " / " .. m.need)
             SetColor(r.count, m.have >= m.need and C.green or C.red)
             r.where:SetText(m.where)
+            if self.BindFarmRow then self:BindFarmRow(r,m.id) end
             local h = math.max(40, 22 + P:TextH(r.where, 14))
             P:Put(r, h, m.sub and 62 or 30, 8)
         end
@@ -1171,6 +1174,7 @@ function PP:BuildSettings()
     AddCheck("Show harvest reminders (herbs, ore, skinning)", "harvestAlert")
     AddCheck("Show node direction and distance", "harvestGuide")
     AddCheck("Show detailed node text", "harvestGuideDetails")
+    AddCheck("Auto-fly to my selected farming spot", "farmAutoFly")
     AddCheck("Saved node map markers", "harvestMarkers")
     AddCheck("Show the tracker", "tracker")
     AddCheck("Hide it in combat", "trackerHideCombat")
