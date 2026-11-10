@@ -294,7 +294,14 @@ local function HideAll(f)
         if f[k] then f[k]:Hide() end
     end
     for _, r in ipairs(f.gear or {}) do r:Hide() end
-    for _, r in ipairs(f.rows) do r:Hide(); if r.find then r.find:Hide() end end
+    for _, r in ipairs(f.rows) do
+        r:Hide()
+        if r.find then r.find:Hide() end
+        r.name:SetWidth(TEXTW - 170)
+        r.count:ClearAllPoints()
+        r.count:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+        r.count:SetWidth(150)
+    end
     for _, z in ipairs(f.zones) do z:Hide() end
     for _, r in ipairs(f.trainers) do r:Hide() end
 end

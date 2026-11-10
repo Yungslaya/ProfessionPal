@@ -285,48 +285,39 @@ function PP:CraftGear(it)
     local ui = C_TradeSkillUI
     if not (it and ui) then return end
     if self:InCombat() then self:Print("Finish combat first.") return end
-    if not self:CanCraft(it) then
-        self:Print(self:KnowsCraft(it.name) and "Put the materials in your bags first." or "Open your profession to check the recipe first.")
-        return
-    end
+    if not self:MatsReady(it) then self:Print("Put the materials in your bags first.") return end
     local ids = self.db.recipeIDs and self.db.recipeIDs[CharKey()]
     local id = ids and ids[it.name]
-    if id and ProfessionOpen() and ui.CraftRecipe then
+    local def = self.byKey[it.profKey] or self:SelectedDef()
+    local current = safe(ui.GetBaseProfessionInfo)
+    local correctWindow = ProfessionOpen() and (not current or not def or
+        current.professionID == def.skillLine or current.skillLineID == def.skillLine)
+    if id and correctWindow and ui.CraftRecipe then
         local info = safe(ui.GetRecipeInfo, id)
-        -- Validate again at the click, even if a different profession is open.
-        if type(info) ~= "table" or info.learned ~= true or info.name ~= it.name then
-            self:Print("Open the recipe in your profession first.")
-            return
-        end
-        if ui.GetRecipeItemLink then
-            local link = safe(ui.GetRecipeItemLink, id)
-            local output = type(link) == "string" and tonumber(link:match("item:(%d+)"))
-            if output and output ~= it.id then self:Print("Recipe changed. Reopen your profession.") return end
-        end
-        if ui.GetCraftableCount then
+        local link = safe(ui.GetRecipeItemLink, id)
+        local output = type(link) == "string" and tonumber(link:match("item:(%d+)"))
+        if type(info) == "table" and info.learned == true and info.name == it.name
+            and (not output or output == it.id) then
             local count = safe(ui.GetCraftableCount, id)
             if type(count) == "number" and count < 1 then
-                self:Print("Check your materials, tools and crafting station.") return
+                self:Print("Check your materials, tools and crafting station.")
+                return
             end
+            local ok = pcall(ui.CraftRecipe, id, 1)
+            if not ok then self:Print("Crafting unavailable. Use Create in the crafting window.") end
+            return
         end
-        local ok, err = pcall(ui.CraftRecipe, id, 1)
-        if not ok then self:Print("Crafting unavailable. Use Create in your profession window.") end
-        return
     end
-    if not id and ProfessionOpen() and self:RecipesScanned() then
-        self:Print("You don't know " .. it.name .. " yet. Learn it at your trainer first.")
-        return
-    end
-    -- not open yet: open your profession at this recipe, then click again to craft
     if id and ui.OpenRecipe then
-        safe(ui.OpenRecipe, id)
-    else
-        local def = self.byKey[it.profKey] or self:SelectedDef()
-        if def and def.skillLine and ui.OpenTradeSkill then safe(ui.OpenTradeSkill, def.skillLine) end
+        local ok, opened = pcall(ui.OpenRecipe, id)
+        if ok and opened ~= false then return end
     end
-    self:Print("Opened your profession. Click |cff33ff33Craft it|r again to make " .. it.name .. ".")
+    if def and def.skillLine and ui.OpenTradeSkill then
+        local ok, opened = pcall(ui.OpenTradeSkill, def.skillLine)
+        if ok and opened ~= false then return end
+    end
+    self:Print("Couldn't open the crafting window for " .. it.name .. ".")
 end
-
 function PP:RecipesScanned()
     return (self.db and self.db.known and self.db.known[CharKey()]) and true or false
 end
