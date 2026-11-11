@@ -292,6 +292,15 @@ function PP:CraftGear(it)
     local current = safe(ui.GetBaseProfessionInfo)
     local correctWindow = ProfessionOpen() and (not current or not def or
         current.professionID == def.skillLine or current.skillLineID == def.skillLine)
+    if id and ProfessionOpen() and not correctWindow then
+        -- Forever can report a different profession ID for the active recipe list.
+        local activeRecipes = safe(ui.GetAllRecipeIDs)
+        if type(activeRecipes) == "table" then
+            for _, activeID in ipairs(activeRecipes) do
+                if activeID == id then correctWindow = true; break end
+            end
+        end
+    end
     if id and correctWindow and ui.CraftRecipe then
         local info = safe(ui.GetRecipeInfo, id)
         local link = safe(ui.GetRecipeItemLink, id)

@@ -88,7 +88,7 @@ local function Window(name, w, title)
     return f
 end
 
-PP.UIText, PP.UIButton, PP.UIIcon = Text, Button, Icon
+PP.UIText, PP.UIButton, PP.UIIcon, PP.UIWindow = Text, Button, Icon, Window
 
 -- Puts things top-down. Returns a placer with :Put(widget, height, x)
 local function Placer(frame, startY)
@@ -280,6 +280,9 @@ function PP:BuildUI()
     f.shopBtn = Button(f, "Shopping List", 150, 32, function() PP:ToggleShop() end)
     f.setBtn = Button(f, "Settings", 120, 32, function() PP:ToggleSettings() end)
     f.guideBtn = Button(f, "Guides", 120, 32, function() PP:ToggleGuides() end)
+    if PP.ToggleMarketLedger then
+        f.marketBtn = Button(f, "Market Ledger", 108, 32, function() PP:ToggleMarketLedger() end)
+    end
     f.guideLine = Text(f, 13, C.green); f.guideLine:SetWidth(TEXTW)
 
     self:BuildShop()
@@ -623,6 +626,13 @@ function PP:Refresh()
     f.shopBtn:ClearAllPoints(); f.shopBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 24, P.y)
     f.setBtn:ClearAllPoints(); f.setBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y)
     f.guideBtn:ClearAllPoints(); f.guideBtn:SetPoint("TOP", f, "TOP", 10, P.y)
+    if f.marketBtn then
+        for i, button in ipairs({f.shopBtn, f.guideBtn, f.marketBtn, f.setBtn}) do
+            button:ClearAllPoints()
+            button:SetWidth(108)
+            button:SetPoint("TOPLEFT", f, "TOPLEFT", 24 + (i - 1) * 115, P.y)
+        end
+    end
     f:SetHeight(-P.y + 54)
 end
 

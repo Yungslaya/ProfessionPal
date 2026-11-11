@@ -31,19 +31,19 @@ PP.C = {
 
 -- ---------- look: dark navy panels, thin blue-gray border, lighter header strip ----------
 PP.THEME = {
-    bg        = { 0.035, 0.047, 0.072, 0.97 },
-    band      = { 0.070, 0.087, 0.126, 1.00 },
-    border    = { 0.220, 0.260, 0.330, 1.00 },
-    inset     = { 0.065, 0.083, 0.118, 0.96 },
-    btn       = { 0.080, 0.104, 0.145, 1.00 },
-    btnHover  = { 0.140, 0.179, 0.235, 1.00 },
+    bg        = { 0.083, 0.063, 0.045, 0.97 },
+    band      = { 0.148, 0.109, 0.073, 1.00 },
+    border    = { 0.382, 0.286, 0.161, 1.00 },
+    inset     = { 0.120, 0.093, 0.064, 0.96 },
+    btn       = { 0.157, 0.116, 0.077, 1.00 },
+    btnHover  = { 0.235, 0.175, 0.104, 1.00 },
     btnSel    = { 0.170, 0.151, 0.102, 1.00 },
-    btnBorder = { 0.240, 0.293, 0.365, 1.00 },
+    btnBorder = { 0.390, 0.288, 0.157, 1.00 },
     selBorder = { 0.750, 0.600, 0.330, 1.00 },
 }
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
--- Give a BackdropTemplate frame the navy look. bandHeight adds the lighter header strip.
+-- Give a BackdropTemplate frame the shared journal look. bandHeight adds the lighter header strip.
 function PP.Skin(f, bandHeight, colors)
     local T = PP.THEME
     colors = colors or {}
