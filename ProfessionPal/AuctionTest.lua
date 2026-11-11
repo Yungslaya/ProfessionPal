@@ -14,9 +14,14 @@ local function savedPrices()
     PP.db.ledgerPrices[key] = PP.db.ledgerPrices[key] or {}
     return PP.db.ledgerPrices[key]
 end
+local function blacklist()
+    PP.db.ledgerBlacklist = PP.db.ledgerBlacklist or {}
+    return PP.db.ledgerBlacklist
+end
+
 local function price(link)
     local id = type(link) == "number" and link or tonumber(link:match("item:(%d+)"))
-    if not id or not ah then return end
+    if not id or not ah or blacklist()[id] then return end
     local key = (type(link) == "string" and read(ah.GetItemKeyFromItemLink, link)) or read(ah.MakeItemKey, id)
     if not key then return end
     local signature = table.concat({key.itemID, key.itemLevel or 0, key.itemSuffix or 0, key.battlePetSpeciesID or 0}, ":")
@@ -257,6 +262,12 @@ local function craftMaterials(entry)
 end
 
 local function act(entry)
+    if entry.page == "Blacklist" then
+        blacklist()[entry.id] = nil
+        refresh()
+        return
+    end
+    if entry.id and blacklist()[entry.id] then return end
     if entry.page == "Auction" then
         if preparedRow and submitPrepared and entry.link == preparedRow.link
             and entry.qty == preparedRow.qty and entry.listed == preparedRow.listed then submitPrepared()
@@ -302,6 +313,24 @@ local function display(entries)
             row:SetPoint("RIGHT", panel.body, "RIGHT", 0, 0)
             if i % 2 == 1 then PP.Skin(row, nil, {bg = PP.THEME.inset}) end
             columns(row)
+            row:EnableMouse(true)
+            row:SetScript("OnMouseUp", function(self, button)
+                local entry = self.entry
+                if button ~= "RightButton" or not entry or not entry.id or entry.page == "Blacklist" then return end
+                blacklist()[entry.id] = entry.name or entry.title
+                refresh()
+                panel.status:SetText("Item blacklisted. Restore it from the Blacklist tab.")
+            end)
+            row:SetScript("OnEnter", function(self)
+                local entry = self.entry
+                if not entry or not entry.id or entry.page == "Blacklist" then return end
+                GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+                GameTooltip:SetText("Right-click to blacklist this item")
+                GameTooltip:Show()
+            end)
+            row:SetScript("OnLeave", function(self)
+                if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
+            end)
             row.button = PP.UIButton(row, "Prepare", 102, 23, function(_, button)
                 if button == "RightButton" and row.entry.page == "Craft" then craftMaterials(row.entry)
                 elseif button == "LeftButton" then act(row.entry) end
@@ -343,7 +372,7 @@ refresh = function()
     for bag = 0, NUM_BAG_SLOTS + (NUM_REAGENTBAG_SLOTS or 0) do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local item = read(C_Container.GetContainerItemInfo, bag, slot)
-            if item and item.hyperlink and not item.isBound and not item.isLocked and not isQuestItem(bag, slot) then
+            if item and item.hyperlink and not blacklist()[item.itemID] and not item.isBound and not item.isLocked and not isQuestItem(bag, slot) then
                 local location = ItemLocation:CreateFromBagAndSlot(bag, slot)
                 if read(C_Item.CanBeAuctioned, location) ~= false then
                     local row = bags[item.hyperlink]
@@ -473,7 +502,7 @@ refresh = function()
             elseif row.offer > 0 and row.vendor == 0 then reason = "No sale value" end
             lines[#lines + 1] = {
                 title = (row.name or row.link:match("%[(.-)%]") or row.link) .. " ×" .. row.count,
-                page = category, action = action .. (qty > 0 and " ×" .. qty or ""),
+                page = category, id = row.id, name = row.name, action = action .. (qty > 0 and " ×" .. qty or ""),
                 auction = money(row.net), vendor = money(row.vendor), reason = reason,
                 link = row.link, qty = qty, listed = row.listed,
                 button = category == "Auction" and "Prepare" or category == "Vendor" and "Sell" or nil,
@@ -481,6 +510,14 @@ refresh = function()
         end
     end
     if #lines == 0 then lines[1] = { title = "No " .. page:lower() .. " picks" } end
+    if page == "Blacklist" then
+        lines = {}
+        for id, name in pairs(blacklist()) do
+            lines[#lines + 1] = {id = id, title = name, page = "Blacklist", button = "Restore"}
+        end
+        table.sort(lines, function(a, b) return a.title < b.title end)
+        if #lines == 0 then lines[1] = {title = "No blacklisted items"} end
+    end
     display(lines)
 end
 local queue, index, current, generation
@@ -501,6 +538,12 @@ local function advance()
         return
     end
     panel.status:SetText(("Checking prices %d / %d"):format(index, #queue))
+    if blacklist()[current.key.itemID] then
+        current = nil
+        local scan = generation
+        C_Timer.After(0, function() if generation == scan then advance() end end)
+        return
+    end
     local ok = pcall(ah.SendSearchQuery, current.key, {}, true)
     local scan, request = generation, current
     C_Timer.After(ok and 4 or 0.4, function()
@@ -634,15 +677,15 @@ local function build()
     scroll:SetScrollChild(panel.body)
     panel.cards = {}
     local tabs = {}
-    for index, name in ipairs({"Auction", "Vendor", "Craft", "Keep"}) do
-        local tab = PP.UIButton(panel, name, 94, 25, function()
+    for index, name in ipairs({"Auction", "Vendor", "Craft", "Keep", "Blacklist"}) do
+        local tab = PP.UIButton(panel, name, 80, 25, function()
             page = name
             header.action:SetText(name == "Keep" and "Reason" or "Plan")
             for label, button in pairs(tabs) do button:SetSelected(label == page) end
             scroll:SetVerticalScroll(0)
             refresh()
         end)
-        tab:SetPoint("TOPLEFT", 18 + (index - 1) * 101, -106)
+        tab:SetPoint("TOPLEFT", 18 + (index - 1) * 85, -106)
         tab:SetSelected(name == page)
         tabs[name] = tab
     end
