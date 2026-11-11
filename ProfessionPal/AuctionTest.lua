@@ -93,7 +93,7 @@ local function prepare(row)
     for bag = 0, NUM_BAG_SLOTS + (NUM_REAGENTBAG_SLOTS or 0) do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local item = read(C_Container.GetContainerItemInfo, bag, slot)
-            if item and item.hyperlink == row.link and not item.isLocked and not isQuestItem(bag, slot) then
+            if item and item.hyperlink == row.link and not item.isBound and not item.isLocked and not isQuestItem(bag, slot) then
                 local location = ItemLocation:CreateFromBagAndSlot(bag, slot)
                 if read(ah.IsSellItemValid, location) ~= false then
                     local function selectedForm()
@@ -199,7 +199,7 @@ local function sellToVendor(entry)
     for bag = 0, NUM_BAG_SLOTS + (NUM_REAGENTBAG_SLOTS or 0) do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local item = read(C_Container.GetContainerItemInfo, bag, slot)
-            if item and item.hyperlink == entry.link and not item.isLocked and not isQuestItem(bag, slot)
+            if item and item.hyperlink == entry.link and (item.isBound == true) == entry.bound and not item.isLocked and not isQuestItem(bag, slot)
                 then
                 local _, vendor = itemDetails(item.hyperlink)
                 if item.hasNoValue or type(vendor) ~= "number" or vendor <= 0 then
@@ -372,16 +372,19 @@ refresh = function()
     for bag = 0, NUM_BAG_SLOTS + (NUM_REAGENTBAG_SLOTS or 0) do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local item = read(C_Container.GetContainerItemInfo, bag, slot)
-            if item and item.hyperlink and not blacklist()[item.itemID] and not item.isBound and not item.isLocked and not isQuestItem(bag, slot) then
+            if item and item.hyperlink and not blacklist()[item.itemID] and not item.isLocked and not isQuestItem(bag, slot) then
+                local bound = item.isBound == true
                 local location = ItemLocation:CreateFromBagAndSlot(bag, slot)
-                if read(C_Item.CanBeAuctioned, location) ~= false then
-                    local row = bags[item.hyperlink]
+                if bound or read(C_Item.CanBeAuctioned, location) ~= false then
+                    local key = bound and ("bound:" .. item.hyperlink) or item.hyperlink
+                    local row = bags[key]
                     if not row then
                         local name, vendor = itemDetails(item.hyperlink)
-                        local net, listed = price(item.hyperlink)
-                        row = { id = item.itemID, link = item.hyperlink, count = 0,
+                        local net, listed
+                        if not bound then net, listed = price(item.hyperlink) end
+                        row = { id = item.itemID, link = item.hyperlink, key = key, bound = bound, count = 0,
                             name = name, vendor = item.hasNoValue and 0 or vendor, net = net, listed = listed }
-                        bags[item.hyperlink] = row
+                        bags[key] = row
                         rows[#rows + 1] = row
                     end
                     row.count = row.count + item.stackCount
@@ -408,13 +411,17 @@ refresh = function()
         local held = reserve[row.id] or reserve[row.name] or 0
         row.spare = math.max(0, row.count - held)
         reserve[row.id] = math.max(0, held - row.count)
-        local keep = plan.keep[row.link]
+        local keep = plan.keep[row.key]
         if keep == nil then
-            keep = row.spare - floor(row.spare * pct / 100)
-            plan.keep[row.link] = keep
+            local offer = row.bound and row.spare == 1 and pct > 0 and 1 or floor(row.spare * pct / 100)
+            keep = row.spare - offer
+            plan.keep[row.key] = keep
         end
-        row.offer = min(floor(row.spare * pct / 100), math.max(0, row.spare - keep))
-        stock[row.id] = (stock[row.id] or 0) + row.offer
+        row.offer = math.max(0, row.spare - keep)
+        if not (row.bound and row.spare == 1 and pct > 0) then
+            row.offer = min(row.offer, floor(row.spare * pct / 100))
+        end
+        if not row.bound then stock[row.id] = (stock[row.id] or 0) + row.offer end
         if row.net and row.vendor then market[row.id] = math.max(row.net, row.vendor) end
     end
 
@@ -483,11 +490,13 @@ refresh = function()
     end
 
     for _, row in ipairs(rows) do
-        local used = min(row.offer, allocated[row.id] or 0)
+        local used = row.bound and 0 or min(row.offer, allocated[row.id] or 0)
         allocated[row.id] = (allocated[row.id] or 0) - used
         local qty = row.offer - used
         local action = "Check price"
         if qty == 0 then action = used > 0 and "Craft" or "Keep"
+        elseif row.bound then
+            action = row.vendor and row.vendor > 0 and "Vendor" or "Keep"
         elseif row.vendor and row.net then
             if row.net > row.vendor then action = "Auction"
             elseif row.vendor > 0 then action = "Vendor"
@@ -504,7 +513,7 @@ refresh = function()
                 title = (row.name or row.link:match("%[(.-)%]") or row.link) .. " ×" .. row.count,
                 page = category, id = row.id, name = row.name, action = action .. (qty > 0 and " ×" .. qty or ""),
                 auction = money(row.net), vendor = money(row.vendor), reason = reason,
-                link = row.link, qty = qty, listed = row.listed,
+                link = row.link, bound = row.bound, qty = qty, listed = row.listed,
                 button = category == "Auction" and "Prepare" or category == "Vendor" and "Sell" or nil,
             }
         end
