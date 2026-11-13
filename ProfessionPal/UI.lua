@@ -34,7 +34,8 @@ local function Button(parent, label, w, h, onClick)
     local b = CreateFrame("Button", nil, parent, "BackdropTemplate")
     b:SetSize(w, h or 30)
     PP.Skin(b, nil, { bg = T.btn, border = T.btnBorder })
-    local fs = Text(b, 15, C.white, "CENTER")
+    local fs = Text(b, 15, T.btnText or C.white, "CENTER")
+    b.textColor = T.btnText
     fs:SetPoint("LEFT", b, "LEFT", 4, 0)
     fs:SetPoint("RIGHT", b, "RIGHT", -4, 0)
     b:SetFontString(fs)
@@ -1127,6 +1128,30 @@ function PP:BuildSettings()
         y = y - 42
         steppers[#steppers + 1] = set
     end
+
+    -- theme: pick one, then Apply reloads the UI so every window uses it
+    local themeText = Text(s, 16, C.white)
+    themeText:SetPoint("TOPLEFT", s, "TOPLEFT", 30, y - 6)
+    local pickTheme
+    local function showTheme()
+        pickTheme = pickTheme or PP.db.theme or "journal"
+        themeText:SetText("Theme:  " .. (PP.THEMES[pickTheme] or PP.THEMES.journal).name)
+    end
+    local themeBtn = Button(s, "Change", 90, 30, function()
+        local nxt = 1
+        for i, k in ipairs(PP.THEME_ORDER) do if k == pickTheme then nxt = i % #PP.THEME_ORDER + 1 end end
+        pickTheme = PP.THEME_ORDER[nxt]
+        showTheme()
+    end)
+    themeBtn:SetPoint("TOPLEFT", s, "TOPLEFT", 250, y)
+    local applyBtn = Button(s, "Apply", 90, 30, function()
+        if PP:InCombat() then PP:Print("Change the theme after combat."); return end
+        PP.db.theme = pickTheme or "journal"
+        ReloadUI()
+    end)
+    applyBtn:SetPoint("LEFT", themeBtn, "RIGHT", 6, 0)
+    y = y - 42
+    steppers[#steppers + 1] = function() pickTheme = nil; showTheme() end
 
     AddCheck("Lock the guide window", "locked")
     AddStepper("Guide size", "scale", 0.8, 1.5, function(v)

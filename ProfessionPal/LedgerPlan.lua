@@ -1,0 +1,21 @@
+-- Market Ledger plan. Written by the Market Ledger Companion (or by an AI such as Claude Code) from a
+-- Market Ledger report. The Plan tab (AuctionTest.lua) reads it. WoW loads it on /reload.
+-- Rewrite the whole file for each new plan.
+--   at    = Unix time the plan was written (a new value resets the player's progress)
+--   scan  = "Last completed scan (Unix time)" from the report
+--   steps = list, in the order to do them:
+--     action = "Auction" | "Vendor"  -> tracked; ticks off when qty of the item has left the bags
+--              "Craft" with qty -> button that makes qty at once; ticks off as they show up in the bags
+--                (add recipe = "Smelt Tin" when the recipe name is not the item name)
+--              any other word ("Hold", "Keep"), or Craft without qty -> shown as a reminder only
+--     name   = exact item name from the report
+--     qty    = how many to sell (never more than "available after reserves")
+--     price  = Auction only: list price in copper per unit
+--     note   = optional, a few plain words shown next to the item
+-- Example:
+--   PP.ledgerPlan = { at = 1794379600, scan = 1794379117, steps = {
+--       { action = "Auction", name = "Silk Cloth", qty = 2, price = 199 },
+--       { action = "Vendor", name = "Mutton Chop", qty = 1 },
+--       { action = "Hold", name = "Wool Cloth", note = "price dipped, wait" },
+--   } }
+local _, PP = ...

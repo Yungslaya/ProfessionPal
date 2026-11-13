@@ -281,7 +281,8 @@ local function ProfessionOpen()
     return pf and pf.IsShown and pf:IsShown() and true or false
 end
 
-function PP:CraftGear(it)
+-- amount (optional): how many to make with one click, like typing a number next to Create.
+function PP:CraftGear(it, amount)
     local ui = C_TradeSkillUI
     if not (it and ui) then return end
     if self:InCombat() then self:Print("Finish combat first.") return end
@@ -312,7 +313,9 @@ function PP:CraftGear(it)
                 self:Print("Check your materials, tools and crafting station.")
                 return
             end
-            local ok = pcall(ui.CraftRecipe, id, 1)
+            local n = math.max(1, math.floor(tonumber(amount) or 1))
+            if type(count) == "number" then n = math.min(n, count) end
+            local ok = pcall(ui.CraftRecipe, id, n)
             if not ok then self:Print("Crafting unavailable. Use Create in the crafting window.") end
             return
         end

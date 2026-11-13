@@ -96,7 +96,7 @@ function PP:OpenFarm(id)
         w:SetScript("OnDragStart",function(f) f:StartMoving() end)
         w:SetScript("OnDragStop",function(f) f:StopMovingOrSizing() end)
         if self.StyleWindow then self:StyleWindow(w) else
-            local bg=w:CreateTexture(nil,"BACKGROUND");bg:SetAllPoints();bg:SetColorTexture(.03,.055,.09,1)
+            local bg=w:CreateTexture(nil,"BACKGROUND");bg:SetAllPoints();bg:SetColorTexture(PP.THEME.bg[1],PP.THEME.bg[2],PP.THEME.bg[3],1)
         end
         local function label(size,x,y,width)
             local t=w:CreateFontString(nil,"OVERLAY"); t:SetFont(PP.FONT,size,"")

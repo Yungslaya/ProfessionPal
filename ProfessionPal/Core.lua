@@ -43,13 +43,65 @@ PP.THEME = {
 }
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
+-- ---------- themes (Settings > Theme). Picked at login; Apply reloads the UI. ----------
+PP.THEME_ORDER = { "journal", "ledger", "midnight", "emerald", "crimson" }
+PP.THEMES = {
+    journal = { name = "Journal" },   -- the look above (default)
+    ledger = { name = "Gold Ledger", edge = 2, font = "Fonts\\FRIZQT__.TTF",
+        bg = { 0.086, 0.075, 0.059, 0.97 }, band = { 0.190, 0.150, 0.080, 1 },
+        border = { 0.790, 0.640, 0.150, 1 }, inset = { 0.135, 0.118, 0.094, 0.96 },
+        btn = { 0.470, 0.080, 0.060, 1 }, btnHover = { 0.600, 0.120, 0.080, 1 },
+        btnSel = { 0.330, 0.060, 0.040, 1 }, btnBorder = { 0.790, 0.640, 0.150, 1 },
+        selBorder = { 1, 0.820, 0, 1 }, btnText = { 1, 0.820, 0 },
+        gold = { 1, 0.820, 0 }, white = { 0.94, 0.93, 0.88 }, gray = { 0.72, 0.68, 0.60 } },
+    midnight = { name = "Midnight",
+        bg = { 0.050, 0.070, 0.120, 0.97 }, band = { 0.090, 0.120, 0.200, 1 },
+        border = { 0.300, 0.380, 0.550, 1 }, inset = { 0.070, 0.100, 0.170, 0.96 },
+        btn = { 0.100, 0.140, 0.240, 1 }, btnHover = { 0.150, 0.210, 0.350, 1 },
+        btnSel = { 0.120, 0.180, 0.300, 1 }, btnBorder = { 0.300, 0.380, 0.550, 1 },
+        selBorder = { 0.940, 0.780, 0.470, 1 } },
+    emerald = { name = "Emerald",
+        bg = { 0.040, 0.080, 0.060, 0.97 }, band = { 0.070, 0.140, 0.100, 1 },
+        border = { 0.250, 0.550, 0.380, 1 }, inset = { 0.060, 0.110, 0.080, 0.96 },
+        btn = { 0.080, 0.180, 0.120, 1 }, btnHover = { 0.120, 0.270, 0.180, 1 },
+        btnSel = { 0.100, 0.220, 0.150, 1 }, btnBorder = { 0.250, 0.550, 0.380, 1 },
+        selBorder = { 0.850, 0.950, 0.600, 1 },
+        gold = { 0.95, 0.85, 0.45 }, gray = { 0.70, 0.80, 0.72 } },
+    crimson = { name = "Crimson", edge = 2,
+        bg = { 0.090, 0.035, 0.035, 0.97 }, band = { 0.180, 0.050, 0.050, 1 },
+        border = { 0.600, 0.150, 0.120, 1 }, inset = { 0.130, 0.050, 0.050, 0.96 },
+        btn = { 0.250, 0.060, 0.060, 1 }, btnHover = { 0.380, 0.090, 0.080, 1 },
+        btnSel = { 0.300, 0.080, 0.070, 1 }, btnBorder = { 0.600, 0.150, 0.120, 1 },
+        selBorder = { 1, 0.820, 0, 1 },
+        gold = { 1, 0.820, 0 }, gray = { 0.80, 0.70, 0.68 } },
+}
+local function copyT(t) local o = {} for k, v in pairs(t) do o[k] = type(v) == "table" and copyT(v) or v end return o end
+local BASE_THEME, BASE_C, BASE_FONT = copyT(PP.THEME), copyT(PP.C), PP.FONT
+
+-- Fills PP.THEME / PP.C in place, so every window built after this uses the theme.
+function PP:ApplyTheme(key)
+    local th = PP.THEMES[key] or PP.THEMES.journal
+    for k in pairs(PP.THEME) do PP.THEME[k] = nil end
+    for k, v in pairs(BASE_THEME) do PP.THEME[k] = copyT(v) end
+    for _, k in ipairs({ "bg", "band", "border", "inset", "btn", "btnHover", "btnSel", "btnBorder", "selBorder", "btnText" }) do
+        if th[k] then PP.THEME[k] = copyT(th[k]) end
+    end
+    PP.THEME.edge = th.edge
+    for k, v in pairs(BASE_C) do
+        local src = th[k] or v
+        if PP.C[k] then for i = 1, 3 do PP.C[k][i] = src[i] end end
+    end
+    PP.FONT = th.font or BASE_FONT
+end
+
 -- Give a BackdropTemplate frame the shared journal look. bandHeight adds the lighter header strip.
 function PP.Skin(f, bandHeight, colors)
     local T = PP.THEME
     colors = colors or {}
     if f.SetBackdrop then
-        f:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1,
-                        insets = { left = 1, right = 1, top = 1, bottom = 1 } })
+        local e = T.edge or 1
+        f:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = e,
+                        insets = { left = e, right = e, top = e, bottom = e } })
         f:SetBackdropColor(unpack(colors.bg or T.bg))
         f:SetBackdropBorderColor(unpack(colors.border or T.border))
     end
@@ -57,15 +109,16 @@ function PP.Skin(f, bandHeight, colors)
         local band = f:CreateTexture(nil, "BACKGROUND", nil, 1)
         band:SetTexture(WHITE)
         band:SetVertexColor(unpack(T.band))
-        band:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
-        band:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -1)
+        local e = T.edge or 1
+        band:SetPoint("TOPLEFT", f, "TOPLEFT", e, -e)
+        band:SetPoint("TOPRIGHT", f, "TOPRIGHT", -e, -e)
         band:SetHeight(bandHeight)
         local line = f:CreateTexture(nil, "BACKGROUND", nil, 2)
         line:SetTexture(WHITE)
         line:SetVertexColor(unpack(T.border))
         line:SetPoint("TOPLEFT", band, "BOTTOMLEFT", 0, 0)
         line:SetPoint("TOPRIGHT", band, "BOTTOMRIGHT", 0, 0)
-        line:SetHeight(1)
+        line:SetHeight(T.edge or 1)
         f.band, f.bandLine = band, line
     end
 end
@@ -96,6 +149,7 @@ local DEFAULTS = {
     autoLearnMax = 10,     -- spending limit per trainer visit, in gold
     guides = {},           -- imported guides: [profession key] = { title, steps, kind }
     useGuide = {},         -- [profession key] = true : follow the imported guide
+    theme = "journal",     -- look: see PP.THEMES
 }
 
 function PP:StarterSetup(restore)
@@ -792,6 +846,7 @@ ev:SetScript("OnEvent", function(_, event)
             end
         end
         PP.db = ProfessionPalDB
+        PP:ApplyTheme(PP.db.theme)
         if PP.BuildUI then PP:BuildUI() end
     end
     if PP.db then PP:RequestRefresh() end

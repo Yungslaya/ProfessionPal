@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.2.8 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.2.16 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -34,7 +34,37 @@ Use `/prof` for the guide and Settings. `/prof starter` previews the starter opt
 
 Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering, Enchanting, Cooking and First Aid.
 
+## Market Ledger: sell your bags smarter
+
+Type `/ppauction`, or click **Market Ledger** in the guide window. At the Auction House, click **Scan Bags**. It prices what you carry and sorts it into Auction, Vendor, Craft and Keep. Every auction, sale and craft is one click from you. Nothing is sold for you.
+
+### AI Help: let an AI plan your sales
+
+The addon cannot talk to an AI by itself, because WoW addons cannot reach the internet. A small Windows app, the **Market Ledger Companion**, carries your scan to the AI and brings the plan back.
+
+**What you need**
+
+- **The Market Ledger Companion.** Get it one of two ways:
+  - Easy: open the [Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater), tick **Market Ledger Companion (app)** and click **Update / Install**. It puts a shortcut on your Desktop and keeps the app up to date.
+  - By hand: [download MarketLedgerCompanion.pyw](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/MarketLedgerCompanion.pyw), save it anywhere and double-click it.
+- **[Python 3](https://www.python.org/downloads/)**, which is free. The Companion needs it to run. Nothing else to install.
+- **Any AI chat**: ChatGPT, Claude or another one. A free account works. No API key is needed.
+
+**The four steps.** Click **AI Help** in Market Ledger. The window marks the step you are on.
+
+1. **Scan prices.** Stand at the Auction House and click **Scan Bags**.
+2. **Save the scan.** Click **Save and reload**. This writes your scan to disk.
+3. **Ask the AI.** Open the Companion. Click **Copy for AI chat**, paste into your AI chat and send it. Copy the AI's whole reply, then click **Paste AI reply**. The Companion checks the plan against your scan and saves it.
+4. **Follow the plan.** Type `/reload` in WoW and open the **Plan** tab. Rows tick off as you sell.
+
+The Companion only reads and writes files on your PC, the same way the TradeSkillMaster app does. It never touches the running game, and you still click every sale yourself. Your plan is kept when the updater updates ProfessionPal (updater 1.1.0 or newer).
+
 ## What's new
+
+- **1.2.16:** Market Ledger has a new **AI Help** window with four clear steps and one button for the step you are on. Scans now save themselves when you reload or log out. A new **Plan** tab lists the AI's picks and ticks them off as you sell. New [Market Ledger Companion](#ai-help-let-an-ai-plan-your-sales) app, which the Dragbags Addon Updater can install. New themes in Settings: Journal, Gold Ledger, Midnight, Emerald and Crimson. New file: fully restart WoW after updating.
+- **1.2.15:** Market Ledger lists soulbound bag items with a sell price on the Vendor tab.
+- **1.2.14:** Right-click an item in Market Ledger to blacklist it.
+- **1.2.13:** Market Ledger added: scan your bags at the Auction House and see what to auction, vendor, craft or keep.
 
 - **1.2.10:** Added saved herb and ore map markers, smaller node directions, and fixes for overlapping and elevated nodes. Type `/reload` after updating.
 
