@@ -278,8 +278,16 @@ end
 
 local function ProfessionOpen()
     local pf = _G.ProfessionsFrame or _G.TradeSkillFrame
-    return pf and pf.IsShown and pf:IsShown() and true or false
+    if pf and pf.IsShown and pf:IsShown() then return true end
+    -- TradeSkillMaster shows its own crafting window in place of the game's.
+    local tsm = _G.TSM_API
+    if type(tsm) == "table" and type(tsm.IsUIVisible) == "function" then
+        local ok, shown = pcall(tsm.IsUIVisible, "CRAFTING")
+        if ok and shown == true then return true end
+    end
+    return false
 end
+PP.ProfessionOpen = ProfessionOpen
 
 -- amount (optional): how many to make with one click, like typing a number next to Create.
 function PP:CraftGear(it, amount)

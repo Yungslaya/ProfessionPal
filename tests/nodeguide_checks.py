@@ -149,3 +149,54 @@ assert(#BLOCKED==0,'no protected-frame changes')
 print('Saved-node checks PASS: minimap transform, arrow bearing, rotating map, arrival-only persistence, automatic revisit, no false confirmation, expiry and profession filtering')
 ''')
 print('ALL SAVED-NODE CHECKS PASSED')
+
+# Guide spots: in a zone where you have found nothing yourself, the arrow and the minimap marks
+# use the guide's own spot data (Data_Nodes.lua), for things your skill can gather.
+L.execute(r"""
+local P=ProfessionPal
+local map=1417                       -- Arathi Highlands: nothing saved here
+P.db.harvestNodes[map]={}
+STATE.combat=false; P.db.harvestAlert=true; P.db.harvestGuide=true; P.db.harvestMarkers=true
+STATE.profs={{name='Mining',line=186,rank=137,max=225}}
+FIRE('SKILL_LINES_CHANGED'); HARVEST_TIME=HARVEST_TIME+10
+local iron=P:NodePoints('Iron Deposit',map)[5]
+local px,py=iron[1]/100-.05,iron[2]/100          -- 50 yards west of a known iron spot (map is 1000 yards wide here)
+C_Map.GetBestMapForUnit=function() return map end
+C_Map.GetMapWorldSize=function() return 1000,1000 end
+C_Map.GetPlayerMapPosition=function() return {GetXY=function() return px,py end} end
+GetCVar=function() return '0' end; GetPlayerFacing=function() return 0 end
+UNITS={}; FIRE('ZONE_CHANGED_NEW_AREA'); P:HarvestGuideUpdate()
+local n=P.harvestNavigation
+assert(P.harvestArrow:IsShown() and n and n.source=='guide','arrow points at a guide spot in a new zone')
+assert(n.name=='Iron Deposit' or n.name=='Gold Vein' or n.name=='Silver Vein' or n.name=='Tin Vein',n.name)
+assert(#P.db.harvestNodes[map]==0,'guide spots are never written into your saved finds')
+P:HarvestPinsUpdate()
+assert(P.harvestMiniPins[1]:IsShown(),'guide spots show on the minimap')
+-- Mithril needs 175 mining: no arrow for it at 137, even standing on a mithril spot.
+local mithril=P:NodePoints('Mithril Deposit',map)
+if mithril then
+  local alone
+  for _,m in ipairs(mithril) do
+    local near=false
+    for _,name in ipairs({'Iron Deposit','Gold Vein','Silver Vein','Tin Vein'}) do
+      for _,q in ipairs(P:NodePoints(name,map) or {}) do if math.abs(q[1]-m[1])+math.abs(q[2]-m[2])<22 then near=true end end
+    end
+    if not near then alone=m end
+  end
+  if alone then
+    px,py=alone[1]/100,alone[2]/100; HARVEST_TIME=HARVEST_TIME+30; FIRE('ZONE_CHANGED_NEW_AREA'); P:HarvestGuideUpdate()
+    assert(not P.harvestArrow:IsShown(),'no arrow for a vein above your skill')
+  end
+end
+-- a profession you do not have: nothing
+STATE.profs={{name='Blacksmithing',line=164,rank=100,max=150}}; FIRE('SKILL_LINES_CHANGED')
+px,py=iron[1]/100-.05,iron[2]/100; HARVEST_TIME=HARVEST_TIME+30; FIRE('ZONE_CHANGED_NEW_AREA'); P:HarvestGuideUpdate(); P:HarvestPinsUpdate()
+assert(not P.harvestArrow:IsShown() and not P.harvestMiniPins[1]:IsShown(),'no mining, no mining spots')
+-- the switch: guide spots off leaves only your own finds
+STATE.profs={{name='Mining',line=186,rank=137,max=225}}; FIRE('SKILL_LINES_CHANGED')
+P.db.harvestGuideSpots=false; HARVEST_TIME=HARVEST_TIME+30; FIRE('ZONE_CHANGED_NEW_AREA'); P:HarvestGuideUpdate(); P:HarvestPinsUpdate()
+assert(not P.harvestArrow:IsShown() and not P.harvestMiniPins[1]:IsShown(),'guide spots can be switched off')
+P.db.harvestGuideSpots=nil
+assert(#BLOCKED==0,'no protected-frame changes')
+print('ALL GUIDE-SPOT CHECKS PASSED')
+""")

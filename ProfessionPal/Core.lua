@@ -460,6 +460,7 @@ local ZONE_MAP = {
     ["Stonetalon Mountains"] = 1442, ["Desolace"] = 1443, ["Feralas"] = 1444, ["Dustwallow Marsh"] = 1445,
     ["Tanaris"] = 1446, ["Azshara"] = 1447, ["Felwood"] = 1448, ["Un'Goro Crater"] = 1449,
     ["Moonglade"] = 1450, ["Silithus"] = 1451, ["Winterspring"] = 1452,
+    ["Blasted Lands"] = 1419, ["Deadwind Pass"] = 1430,
     ["Zephras Isle"] = 2521, ["Riverglades"] = 2548,
 }
 PP.ZONE_MAP = ZONE_MAP
@@ -487,6 +488,7 @@ local function WorldPos(map, x, y)
     worldCache[key] = { cont, px, py }
     return cont, px, py
 end
+PP.WorldPos = WorldPos   -- map, x, y (0-1) -> continent, world x, world y
 
 -- Your own world position: continentID, x, y
 function PP:PlayerWorld()

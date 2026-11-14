@@ -83,8 +83,11 @@ function PP:SelectFarm(id,index)
     if not a then return end
     local name=self:MatName(id)
     self.farmTrip={item=id,m=a.m,x=a.x,y=a.y,n=name,p=a.p,expires=GetTime()+1800}
-    self:Pin(self.farmTrip)
-    self:Print(a.p..": "..a.mobs..". Pin marks an approximate farming area.")
+    -- Map guide: opens the map on the area and starts the way there (falls back to a plain pin).
+    if self.SetGuideTarget then
+        self:SetGuideTarget({m=a.m,x=a.x,y=a.y,title=a.p,what="Farm "..name,radius=6,note=a.mobs})
+    else self:Pin(self.farmTrip) end
+    self:Print(a.p..": "..a.mobs..". The circle is an approximate farming area.")
     return self.farmTrip
 end
 local window
@@ -108,7 +111,7 @@ function PP:OpenFarm(id)
         for i=1,4 do
             local row={};w.rows[i]=row
             row.text=label(14,18,-100-(i-1)*65,350)
-            row.button=PP.UIButton(w,"Pin",72,28,function() PP:SelectFarm(w.item,i) end)
+            row.button=PP.UIButton(w,"Map",72,28,function() PP:SelectFarm(w.item,i) end)
             row.button:SetPoint("TOPRIGHT",-18,-100-(i-1)*65)
         end
         w.fly=CreateFrame("CheckButton",nil,w,"UICheckButtonTemplate");w.fly:SetPoint("BOTTOMLEFT",14,44)

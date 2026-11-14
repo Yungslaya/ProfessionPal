@@ -289,6 +289,8 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         local entries=nodeDebug.entries
         entries[#entries+1]=reason
         if #entries>12 then table.remove(entries,1) end
+        -- Kept in the saved settings too, so the notes survive a /reload and can be read from the file.
+        if PP.db then PP.db.harvestTrace=entries end
     end
     local function add(kind, list)
         for _, name in ipairs(list) do names[name:lower()] = kind end
@@ -343,6 +345,36 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
     end
     local function canUse(n)
         return valid(n) and skills[n.kind] and (not numeric(n.required) or skills[n.kind]>=n.required)
+    end
+    -- Spots from the guide's own data (Data_Nodes.lua), for zones where you have not found any
+    -- yourself yet. They are approximate (about one map percent) and marked source="guide".
+    local guideSpots = {}
+    local function guideList(map)
+        local spots = guideSpots[map]
+        if spots then return spots end
+        spots = {}
+        local need = {}
+        for _, item in ipairs(PP.FARMABLE or {}) do
+            if item.node then need[item.node] = item end
+        end
+        for name in pairs(PP.NODES or {}) do
+            local item, points = need[name], PP.NodePoints and PP:NodePoints(name, map)
+            if item and points then
+                for _, point in ipairs(points) do
+                    spots[#spots+1] = { map=map, x=point[1]/100, y=point[2]/100, name=name,
+                        kind=item.prof, required=item.skill, source="guide" }
+                end
+            end
+        end
+        guideSpots[map] = spots
+        return spots
+    end
+    -- Calls fn for every spot in a zone: the ones you found, then the guide's.
+    local function eachSpot(map, fn)
+        for _, n in ipairs(list(map)) do fn(n) end
+        if PP.db.harvestGuideSpots ~= false then
+            for _, n in ipairs(guideList(map)) do fn(n) end
+        end
     end
     local function quiet()
         PP.harvestNavigation=nil
@@ -479,24 +511,24 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
     function PP:HarvestGuideUpdate()
         if not self.db or self.db.harvestAlert==false or self.db.harvestGuide==false or read(InCombatLockdown)==true or read(UnitIsDeadOrGhost,"player")==true then quiet(); return end
         createArrow()
-        local p=position(); if not p then quiet(); return end
+        local p=position(); if not p then trace("Arrow hidden: the game will not give your map position"); quiet(); return end
         if goal and goal.map==p.map and goal.expires and now()>goal.expires then
             dismissGoal(p); quiet(); return
         end
         if goal and (goal.map~=p.map or not canUse(goal) or (skipped[goal] and now()<skipped[goal])) then goal=nil; arrived=nil; pursuit=nil end
         if not goal and now()>=searchAt then
             searchAt=now()+1
-            local best=150 -- automatic reminders for previously discovered spots within 150 yards
-            for _,n in ipairs(list(p.map)) do
+            local best=150 -- automatic reminders for known spots within 150 yards
+            eachSpot(p.map, function(n)
                 if canUse(n) and (not skipped[n] or now()>skipped[n]) then
                     local d=distance(p,n)
                     if d<best then goal=n; best=d end
                 end
-            end
+            end)
         end
         if not goal then quiet(); return end
         local d=distance(p,goal)
-        if d>180 then dismissGoal(p); quiet(); return end
+        if d>180 then trace("Dropped "..goal.name..": more than 180 yards away"); dismissGoal(p); quiet(); return end
         if not pursuit or pursuit.name~=goal.name or pursuit.map~=goal.map
             or math.abs(pursuit.x-goal.x)*p.w>18 or math.abs(pursuit.y-goal.y)*p.h>18 then
             pursuit={name=goal.name,map=goal.map,x=goal.x,y=goal.y,best=d,progressAt=now()}
@@ -505,6 +537,7 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         if d>pursuit.best+15 then pursuit.awayAt=pursuit.awayAt or now()
         else pursuit.awayAt=nil end
         if (pursuit.awayAt and now()-pursuit.awayAt>=2) or now()-pursuit.progressAt>=20 then
+            trace("Dropped "..goal.name..": you moved away, or made no progress for 20 seconds")
             dismissGoal(p); quiet(); return
         end
         local live=PP.harvestState
@@ -513,15 +546,16 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
             arrived=arrived or now()
             if now()-arrived>3 then
                 skipped[goal]=now()+600
-                for _,n in ipairs(list(p.map)) do
+                eachSpot(p.map, function(n)
                     if valid(n) and distance(p,n)<=18 then skipped[n]=now()+600 end
-                end
+                end)
                 goal=nil; arrived=nil; quiet(); return
             end
         else arrived=nil end
         local label=(detected and "" or goal.source=="minimap" and "Last seen: " or "Possible: ")..goal.name
         local status=detected and "Detected nearby" or d<=10 and "Search nearby - not confirmed"
-            or ("~"..math.floor(d+0.5).." yd - "..(goal.source=="minimap" and "minimap sighting" or "saved spot"))
+            or ("~"..math.floor(d+0.5).." yd - "..(goal.source=="minimap" and "minimap sighting"
+                or goal.source=="guide" and "guide spot" or "saved spot"))
         if not self.db.harvestGuideDetails then
             label=goal.name
             status=detected and "Nearby" or d<=10 and "Check nearby" or ("~"..math.floor(d+0.5).." yd")
@@ -542,8 +576,8 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         PP.harvestNavigation={name=goal.name,kind=goal.kind,source=detected and "live" or goal.source or "history",distance=d,confirmed=detected and true or false,x=goal.x,y=goal.y,map=goal.map}
     end
     function PP:HarvestGuideCommand(arg)
-        if arg=="debug on" then nodeDebug.enabled=true; nodeDebug.last=nil; self:Print("Node debug on. Hover the node, then /prof harvest debug.")
-        elseif arg=="debug off" then nodeDebug.enabled=false; self:Print("Node debug off.")
+        if arg=="debug on" then nodeDebug.enabled=true; nodeDebug.last=nil; self.db.harvestDebug=true; self:Print("Node debug on. Hover the node, then /prof harvest debug.")
+        elseif arg=="debug off" then nodeDebug.enabled=false; self.db.harvestDebug=false; self.db.harvestTrace=nil; self:Print("Node debug off.")
         elseif arg=="debug" then
             self:Print("Node debug: "..(nodeDebug.enabled and "on" or "off").."; reminders="..tostring(self.db.harvestAlert).."; guide="..tostring(self.db.harvestGuide))
             for _,line in ipairs(nodeDebug.entries) do self:Print(line) end
@@ -607,8 +641,9 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         local facing=rotate=="1" and read(GetPlayerFacing) or 0
         if not numeric(facing) then return end
         local index=0
-        for _,n in ipairs(list(p.map)) do
-            if valid(n) and skills[n.kind] then
+        eachSpot(p.map, function(n)
+            -- your own finds always show; guide spots only when your skill is high enough for them
+            if valid(n) and skills[n.kind] and (n.source~="guide" or canUse(n)) then
                 local east,north=(n.x-p.x)*p.w,(p.y-n.y)*p.h
                 local dx=(east*math.cos(facing)+north*math.sin(facing))/radius
                 local dy=(-east*math.sin(facing)+north*math.cos(facing))/radius
@@ -618,7 +653,7 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
                     pin(miniPins,index,Minimap,n):SetPoint("CENTER",Minimap,"CENTER",dx*w/2,dy*h/2)
                 end
             end
-        end
+        end)
     end
     local pinsDriver=CreateFrame("Frame")
     local pinsTick=0
@@ -633,6 +668,8 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         if not PP.db then return end
         if e=="PLAYER_LOGIN" then
             if PP.db.harvestGuide==nil then PP.db.harvestGuide=false end
+            -- "debug on" is remembered across reloads until "debug off"
+            if PP.db.harvestDebug~=false then nodeDebug.enabled=true end
             for _,records in pairs(type(PP.db.harvestNodes)=="table" and PP.db.harvestNodes or {}) do
                 if type(records)=="table" then for _,n in ipairs(records) do if valid(n) then names[n.name:lower()]=n.kind end end end
             end
@@ -649,18 +686,30 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         tick=tick+dt; if tick<0.2 then return end; tick=0
         -- Some minimap tooltip updates do not fire the data callback again.
         -- Read only the visible tooltip while the pointer is over the minimap.
-        if Minimap and read(Minimap.IsMouseOver,Minimap)==true and GameTooltip and read(GameTooltip.IsShown,GameTooltip)==true then
+        local overMap=Minimap and read(Minimap.IsMouseOver,Minimap)==true
+        local tipShown=GameTooltip and read(GameTooltip.IsShown,GameTooltip)==true
+        if overMap then
+            -- Ask the game what is under the pointer. This does not depend on which addon draws the tooltip.
             local data=C_TooltipInfo and read(C_TooltipInfo.GetMinimapMouseover)
             if data then PP:HarvestMinimapHint(data) end
             local lines={}
-            for i=1,math.min(read(GameTooltip.NumLines,GameTooltip) or 0,12) do
-                local region=_G["GameTooltipTextLeft"..i]
-                local value=region and text(read(region.GetText,region))
-                if value then lines[#lines+1]={leftText=value} end
+            if tipShown then
+                for i=1,math.min(read(GameTooltip.NumLines,GameTooltip) or 0,12) do
+                    local region=_G["GameTooltipTextLeft"..i]
+                    local value=region and text(read(region.GetText,region))
+                    if value then lines[#lines+1]={leftText=value} end
+                end
             end
             if not data and #lines>0 then PP:HarvestMinimapHint({lines=lines}) end
+            if not data and #lines==0 and tipShown then trace("Over the minimap with a tooltip, but the game hides its text") end
         end
-        PP:HarvestGuideUpdate()
+        if nodeDebug.enabled then
+            -- with debug on, a hidden error in the arrow code is written down instead of lost
+            local ok,err=pcall(PP.HarvestGuideUpdate,PP)
+            if not ok then trace("ERROR: "..tostring(err)) end
+        else
+            PP:HarvestGuideUpdate()
+        end
     end)
     local typ=Enum and Enum.TooltipDataType and Enum.TooltipDataType.MinimapMouseover
     if typ and TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then

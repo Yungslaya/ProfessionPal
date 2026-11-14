@@ -235,9 +235,25 @@ function PP:BuildUI()
 
     f.whereHead = Text(f, 15, C.gold); f.whereHead:SetText("Go to:")
     f.zones = {}
+    f.stopRoute = Button(f, "Stop route", 96, 22, function() PP:ClearGuideTarget() end)
+    f.stopRoute:Hide()
+    f.zoneMaps = {}
     for i = 1, 5 do
-        local z = Text(f, 15, C.white); z:SetWidth(TEXTW)
+        local z = Text(f, 15, C.white); z:SetWidth(TEXTW - 96)
         f.zones[i] = z
+        -- "Map": open the world map on this zone with the spots drawn, and start the way there
+        local b = Button(f, "Map", 60, 22, function(self)
+            if self.step and self.zone then PP:ShowZoneOnMap(self.step, self.zone) end
+        end)
+        b:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText("Show on map", 1, 1, 1)
+            GameTooltip:AddLine("Opens the map here and marks where to farm.", nil, nil, nil, true)
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        b:Hide()
+        f.zoneMaps[i] = b
     end
     f.zoneTip = Text(f, 14, C.gray); f.zoneTip:SetWidth(TEXTW - 16)
     f.tool = Text(f, 15, C.red); f.tool:SetWidth(TEXTW)
@@ -281,9 +297,12 @@ function PP:BuildUI()
     f.shopBtn = Button(f, "Shopping List", 150, 32, function() PP:ToggleShop() end)
     f.setBtn = Button(f, "Settings", 120, 32, function() PP:ToggleSettings() end)
     f.guideBtn = Button(f, "Guides", 120, 32, function() PP:ToggleGuides() end)
-    if PP.ToggleMarketLedger then
-        f.marketBtn = Button(f, "Market Ledger", 108, 32, function() PP:ToggleMarketLedger() end)
-    end
+    -- Market Ledger is its own addon now. This button opens it, or says where to get it.
+    f.marketBtn = Button(f, "Market Ledger", 108, 32, function()
+        local ledger = _G.MarketLedger
+        if ledger and ledger.Toggle then ledger:Toggle()
+        else PP:Print("Market Ledger is now its own addon. Install it from the same place you got ProfessionPal.") end
+    end)
     f.guideLine = Text(f, 13, C.green); f.guideLine:SetWidth(TEXTW)
 
     self:BuildShop()
@@ -307,6 +326,8 @@ local function HideAll(f)
         r.count:SetWidth(150)
     end
     for _, z in ipairs(f.zones) do z:Hide() end
+    for _, b in ipairs(f.zoneMaps) do b:Hide() end
+    f.stopRoute:Hide()
     for _, r in ipairs(f.trainers) do r:Hide() end
 end
 
@@ -486,6 +507,12 @@ function PP:Refresh()
         local list = (st.zones or st.zoneList) and self:ZoneOptions(def, st) or {}
         if #list > 0 then
             f.whereHead:SetText("Go to:")
+            -- a farm route is running: one click here stops it (same as Clear on the map)
+            if PP.db.guideTarget and PP.ClearGuideTarget then
+                f.stopRoute:ClearAllPoints()
+                f.stopRoute:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y + 4)
+                f.stopRoute:Show()
+            end
             P:Put(f.whereHead, 16, 24, 4)
             for zi = 1, math.min(#f.zones, #list) do
                 local z = list[zi]
@@ -495,7 +522,14 @@ function PP:Refresh()
                 if z.here then t = t .. "   - you are here" end
                 fs:SetText(t)
                 SetColor(fs, zi == 1 and C.white or C.gray)
-                P:Put(fs, P:TextH(fs, 16), 36, 3)
+                local mapButton = f.zoneMaps[zi]
+                if PP.ShowZoneOnMap and PP.ZONE_MAP[z.name] then
+                    mapButton.step, mapButton.zone = st, z.name
+                    mapButton:ClearAllPoints()
+                    mapButton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, P.y + 3)
+                    mapButton:Show()
+                end
+                P:Put(fs, math.max(P:TextH(fs, 16), 19), 36, 4)
                 if zi == 1 and z.tip then
                     f.zoneTip:SetText(z.tip)
                     P:Put(f.zoneTip, P:TextH(f.zoneTip, 15), 50, 6)

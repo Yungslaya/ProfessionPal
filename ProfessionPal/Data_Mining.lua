@@ -89,6 +89,7 @@ local Z = {
     felwood    = { "Felwood", "48-55", "Small Thorium Veins along the hills." },
     winter     = { "Winterspring", "55-60", "Circle Lake Kel'Theril from Everlook, then Frostsaber Rock." },
     epl        = { "Eastern Plaguelands", "53-60", "Rich and Small Thorium Veins along the hills." },
+    riverglades = { "Riverglades", nil, "New Forever zone with a lot of Iron. Click Map and follow the dots." },
 }
 
 PP:AddProfession{
@@ -134,8 +135,8 @@ PP:AddProfession{
           tip = "Train Journeyman before 75. Copper is gray at 100." },
         { from = 125, to = 175, text = "Mine Iron and Gold",
           nodes = { { "Iron Deposit", 125, IRON_ORE }, { "Gold Vein", 155, GOLD_ORE } },
-          zones = { Horde = { "needles", "arathi", "desolace" },
-                    Alliance = { "arathi", "desolace", "needles" } },
+          zones = { Horde = { "needles", "arathi", "desolace", "riverglades" },
+                    Alliance = { "arathi", "desolace", "needles", "riverglades" } },
           tip = "Train Expert at 125. Mine outside, skip slow caves." },
         { from = 175, to = 225, text = "Mine Mithril",
           nodes = { { "Mithril Deposit", 175, MITHRIL_ORE }, { "Gold Vein", 155, GOLD_ORE } },

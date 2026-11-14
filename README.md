@@ -5,7 +5,7 @@ It reads your real skill, counts your bags and bank, and tells you the one thing
 
 ### [⬇ Download ProfessionPal (zip)](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/ProfessionPal.zip)
 
-No account needed. Beta 1.2.16 · for WoW: Forever (interface 16001)
+No account needed. Beta 1.3.0 · for WoW: Forever (interface 16001)
 
 **Want it to update itself?** Get the **[Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater)**: one click installs ProfessionPal, and it keeps it up to date every time you log in to Windows.
 
@@ -34,33 +34,26 @@ Use `/prof` for the guide and Settings. `/prof starter` previews the starter opt
 
 Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering, Enchanting, Cooking and First Aid.
 
-## Market Ledger: sell your bags smarter
+## Show me where to go
 
-Type `/ppauction`, or click **Market Ledger** in the guide window. At the Auction House, click **Scan Bags**. It prices what you carry and sorts it into Auction, Vendor, Craft and Keep. Every auction, sale and craft is one click from you. Nothing is sold for you.
+Every zone in the guide has a **Map** button. Click it and the world map opens on that zone with:
 
-### AI Help: let an AI plan your sales
+- a dot for every known ore or herb spot, and one loop to ride through them
+- a pin on the flight point you know that is closest to the spots, or on the nearest spot if you are already in the zone
+- a bar that says what the dot colours mean, with **Next** and **Clear** buttons
 
-The addon cannot talk to an AI by itself, because WoW addons cannot reach the internet. A small Windows app, the **Market Ledger Companion**, carries your scan to the AI and brings the plan back.
+When you reach the pinned spot, the pin hops to the next one. **Next** skips a spot that has nothing. **Clear** on the map, or **Stop route** in the guide window, ends it. The on-screen arrow and the minimap marks use the same spots, so they work in zones you have never gathered in.
 
-**What you need**
+Spots are places a vein or herb *can* spawn, good to about 40 yards. They are not proof one is up right now.
 
-- **The Market Ledger Companion.** Get it one of two ways:
-  - Easy: open the [Dragbags Addon Updater](https://github.com/Yungslaya/DragbagsAddonUpdater), tick **Market Ledger Companion (app)** and click **Update / Install**. It puts a shortcut on your Desktop and keeps the app up to date.
-  - By hand: [download MarketLedgerCompanion.pyw](https://github.com/Yungslaya/ProfessionPal/releases/latest/download/MarketLedgerCompanion.pyw), save it anywhere and double-click it.
-- **[Python 3](https://www.python.org/downloads/)**, which is free. The Companion needs it to run. Nothing else to install.
-- **Any AI chat**: ChatGPT, Claude or another one. A free account works. No API key is needed.
+**Optional:** with [Shortest Path Forever](https://github.com/cjber/shortest-path-forever) by cjber installed, ProfessionPal asks it for the way there and it draws its road route, boats and flights. Without it you get the game's own map pin. ProfessionPal works either way, and none of Shortest Path's code is included.
 
-**The four steps.** Click **AI Help** in Market Ledger. The window marks the step you are on.
+## Market Ledger is its own addon now
 
-1. **Scan prices.** Stand at the Auction House and click **Scan Bags**.
-2. **Save the scan.** Click **Save and reload**. This writes your scan to disk.
-3. **Ask the AI.** Open the Companion. Click **Copy for AI chat**, paste into your AI chat and send it. Copy the AI's whole reply, then click **Paste AI reply**. The Companion checks the plan against your scan and saves it.
-4. **Follow the plan.** Type `/reload` in WoW and open the **Plan** tab. Rows tick off as you sell.
-
-The Companion only reads and writes files on your PC, the same way the TradeSkillMaster app does. It never touches the running game, and you still click every sale yourself. Your plan is kept when the updater updates ProfessionPal (updater 1.1.0 or newer).
-
+The bag-pricing and selling tool that used to live here moved to **[Market Ledger](https://github.com/Yungslaya/MarketLedger)**, so ProfessionPal stays small. Install it and your saved prices and settings move over by themselves. The **Market Ledger** button in the guide window still opens it. With both installed, Market Ledger will not sell materials your guide needs, and its Farm tab uses ProfessionPal's maps.
 ## What's new
 
+- **1.3.0:** New **Map** buttons: the world map opens on the zone with every known ore and herb spot, a loop to follow, and a pin that hops to the next spot when you arrive. Riverglades and Zephras Isle spots added. The arrow and minimap marks now work in zones you have not gathered in. Works with Shortest Path Forever for a road route (optional). Market Ledger moved to [its own addon](https://github.com/Yungslaya/MarketLedger). New files: fully restart WoW after updating.
 - **1.2.16:** Market Ledger has a new **AI Help** window with four clear steps and one button for the step you are on. Scans now save themselves when you reload or log out. A new **Plan** tab lists the AI's picks and ticks them off as you sell. New [Market Ledger Companion](#ai-help-let-an-ai-plan-your-sales) app, which the Dragbags Addon Updater can install. New themes in Settings: Journal, Gold Ledger, Midnight, Emerald and Crimson. New file: fully restart WoW after updating.
 - **1.2.15:** Market Ledger lists soulbound bag items with a sell price on the Vendor tab.
 - **1.2.14:** Right-click an item in Market Ledger to blacklist it.
@@ -108,7 +101,7 @@ Known limits: crafting steps above skill 225 come from Wowhead's planner and hav
 
 ## Data
 
-Built from the [Icy Veins WoW: Forever profession guides](https://www.icy-veins.com/wow-forever/professions-overview) for all 12 professions and the [Wowhead WoW: Forever](https://www.wowhead.com/forever/guides/professions) item database.
+Ore and herb spots come from the [Wowhead WoW: Forever database](https://www.wowhead.com/forever). Road routes are drawn by [Shortest Path Forever](https://github.com/cjber/shortest-path-forever) by cjber when it is installed. Guides are built from the [Icy Veins WoW: Forever profession guides](https://www.icy-veins.com/wow-forever/professions-overview) for all 12 professions and the [Wowhead WoW: Forever](https://www.wowhead.com/forever/guides/professions) item database.
 
 ## Code review
 

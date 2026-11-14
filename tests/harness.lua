@@ -20,7 +20,11 @@ function Widget:GetText() return self._text end
 function Widget:SetFont(f, s) self._font, self._size = f, s; return true end
 function Widget:GetStringHeight() if self._text and self._text ~= "" then return self._size or 14 end return 0 end
 function Widget:Show() self._shown = true; if self._scripts.OnShow then self._scripts.OnShow(self) end end
-function Widget:Hide() self._shown = false end
+function Widget:Hide()
+    local was = self._shown
+    self._shown = false
+    if was and self._scripts.OnHide then self._scripts.OnHide(self) end
+end
 function Widget:SetShown(v) if v then self:Show() else self:Hide() end end
 function Widget:IsShown() return self._shown end
 function Widget:IsVisible()
@@ -37,6 +41,7 @@ function Widget:SetChecked(v) self._checked = v end
 function Widget:GetChecked() return self._checked end
 function Widget:CreateFontString() local o = new("FontString", self); return o end
 function Widget:CreateTexture() local o = new("Texture", self); return o end
+function Widget:CreateLine() local o = new("Line", self); return o end
 function Widget:SetTexture(t) self._tex = t end
 function Widget:GetTexture() return self._tex end
 function Widget:GetFontString() if not self._fs then self._fs = new("FontString", self) end return self._fs end
