@@ -51,8 +51,29 @@ Spots are places a vein or herb *can* spawn, good to about 40 yards. They are no
 ## Market Ledger is its own addon now
 
 The bag-pricing and selling tool that used to live here moved to **[Market Ledger](https://github.com/Yungslaya/MarketLedger)**, so ProfessionPal stays small. Install it and your saved prices and settings move over by themselves. The **Market Ledger** button in the guide window still opens it. With both installed, Market Ledger will not sell materials your guide needs, and its Farm tab uses ProfessionPal's maps.
+
+### Use the addons together
+
+1. Install ProfessionPal and Market Ledger, then fully restart WoW if either addon is new.
+2. Open `/prof` and select your profession guide. Its needed materials are reserved when Market Ledger builds sale recommendations.
+3. At an auctioneer, open **Market Ledger**, choose the percentage of spare stock to offer, and click **Scan Bags**.
+4. For a plan, click **AI Help → Copy for AI**, paste into your preferred chat, then bring the returned PLAN back through **Paste reply → Save plan**. No desktop Companion or API key is needed for this copy-and-paste route.
+5. Follow **Plan**, or use Auction, Vendor and Craft individually. Check each quantity and price. Every sale/craft needs your click.
+6. To gather, use Market Ledger's **Farm → Map** or a **Map** button in `/prof`. **Next** skips a spot; **Clear** or **Stop route** ends the guide.
+
+**Optional TradeSkillMaster:** install its compatible addons and configure its desktop app for your realm. Market Ledger reads available price and sales context automatically through TSM's public API. If another scan keeps the Auction House busy, stop that scan or use TSM's **WoW UI** button, then resume **Scan Bags**. TSM can remain enabled.
+
+**Optional Shortest Path Forever:** install it and restart WoW. Clicking **Map** asks it for a travel route; without it you get the normal map pin. Its routes guide you, but never move your character. Gathering spots are possible spawns, not proof that a node is available.
+
+See [Market Ledger's complete guide](https://github.com/Yungslaya/MarketLedger#readme) for stock limits, blacklisting, vendor comparisons, the optional Companion and troubleshooting. Asking prices, cached TSM references and completed-sale statistics are different kinds of information; none guarantees a sale.
+
+### Credits
+
+Thank you to the **[TradeSkillMaster team](https://www.tradeskillmaster.com/)** for pricing tools and its public API, **[cjber and Shortest Path Forever contributors](https://github.com/cjber/shortest-path-forever)** for routing, and **[Wowhead's database contributors](https://www.wowhead.com/forever)** for gathering-location data. These integrations use public addon APIs; their code is not bundled with ProfessionPal.
+
 ## What's new
 
+- **1.3.1:** Gathering markers reuse their existing frames and avoid unnecessary redraw work. Minimap tracking can fall back to readable tooltip text when the main tooltip data is incomplete. Expanded setup instructions for Market Ledger, AI plans, TSM and Shortest Path Forever. Type `/reload` after updating.
 - **1.3.0:** New **Map** buttons: the world map opens on the zone with every known ore and herb spot, a loop to follow, and a pin that hops to the next spot when you arrive. Riverglades and Zephras Isle spots added. The arrow and minimap marks now work in zones you have not gathered in. Works with Shortest Path Forever for a road route (optional). Market Ledger moved to [its own addon](https://github.com/Yungslaya/MarketLedger). New files: fully restart WoW after updating.
 - **1.2.16:** Market Ledger has a new **AI Help** window with four clear steps and one button for the step you are on. Scans now save themselves when you reload or log out. A new **Plan** tab lists the AI's picks and ticks them off as you sell. New [Market Ledger Companion](#ai-help-let-an-ai-plan-your-sales) app, which the Dragbags Addon Updater can install. New themes in Settings: Journal, Gold Ledger, Midnight, Emerald and Crimson. New file: fully restart WoW after updating.
 - **1.2.15:** Market Ledger lists soulbound bag items with a sell price on the Vendor tab.

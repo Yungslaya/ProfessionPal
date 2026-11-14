@@ -507,6 +507,7 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         goal=p
         trace("Tracking "..p.name.." (approximate minimap position)")
         self:HarvestGuideUpdate()
+        return true
     end
     function PP:HarvestGuideUpdate()
         if not self.db or self.db.harvestAlert==false or self.db.harvestGuide==false or read(InCombatLockdown)==true or read(UnitIsDeadOrGhost,"player")==true then quiet(); return end
@@ -603,50 +604,53 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
             f=CreateFrame("Frame",nil,parent); f:SetSize(9,9); f:EnableMouse(false)
             f.pic=f:CreateTexture(nil,"OVERLAY"); f.pic:SetAllPoints()
             f.pic:SetTexture("Interface\\COMMON\\Indicator-Yellow")
+            f.nodeParent=parent
             pool[index]=f
         end
-        f:SetParent(parent)
-        if node.kind=="herbalism" then f.pic:SetVertexColor(0.3,1,0.45,0.85)
-        else f.pic:SetVertexColor(1,0.7,0.2,0.85) end
+        if f.nodeParent~=parent then f:SetParent(parent); f.nodeParent=parent end
+        if f.nodeKind~=node.kind then
+            if node.kind=="herbalism" then f.pic:SetVertexColor(0.3,1,0.45,0.85)
+            else f.pic:SetVertexColor(1,0.7,0.2,0.85) end
+            f.nodeKind=node.kind
+        end
         f:ClearAllPoints(); f:Show(); return f
     end
-    function PP:HarvestPinsUpdate()
-        for _,f in ipairs(mapPins) do f:Hide() end
-        for _,f in ipairs(miniPins) do f:Hide() end
-        if not self.db or self.db.harvestMarkers==false then return end
+    local function placePins()
         if now()>=refreshAt then refreshSkills() end
         local map=WorldMapFrame
-        local canvas=map and map.GetCanvas and read(map.GetCanvas,map)
-        local id=map and map.GetMapID and read(map.GetMapID,map)
-        if canvas and numeric(id) and read(map.IsShown,map)==true then
-            local w,h=read(canvas.GetWidth,canvas),read(canvas.GetHeight,canvas)
-            if numeric(w) and numeric(h) and w>0 and h>0 then
-                local index=0
+        local mapIndex=0
+        if map and read(map.IsShown,map)==true then
+            local canvas,id=read(map.GetCanvas,map),read(map.GetMapID,map)
+            local w=canvas and read(canvas.GetWidth,canvas)
+            local h=canvas and read(canvas.GetHeight,canvas)
+            if numeric(id) and numeric(w) and numeric(h) and w>0 and h>0 then
                 for _,n in ipairs(list(id)) do
                     if valid(n) and skills[n.kind] then
-                        index=index+1
-                        pin(mapPins,index,canvas,n):SetPoint("CENTER",canvas,"TOPLEFT",n.x*w,-n.y*h)
+                        mapIndex=mapIndex+1
+                        pin(mapPins,mapIndex,canvas,n):SetPoint("CENTER",canvas,"TOPLEFT",n.x*w,-n.y*h)
                     end
                 end
             end
         end
+        if not Minimap or read(Minimap.IsShown,Minimap)~=true then return mapIndex,0 end
         local p=position()
-        if not p or not Minimap or read(Minimap.IsShown,Minimap)~=true then return end
+        if not p then return mapIndex,0 end
         local radius=C_Minimap and read(C_Minimap.GetViewRadius)
         local w,h=read(Minimap.GetWidth,Minimap),read(Minimap.GetHeight,Minimap)
-        if not numeric(radius) or radius<=0 or not numeric(w) or not numeric(h) or w<=0 or h<=0 then return end
+        if not numeric(radius) or radius<=0 or not numeric(w) or not numeric(h) or w<=0 or h<=0 then return mapIndex,0 end
         local rotate=read((C_CVar and C_CVar.GetCVar) or GetCVar,"rotateMinimap")
         if C_Minimap and read(C_Minimap.IsRotateMinimapIgnored)==true then rotate="0" end
-        if rotate~="0" and rotate~="1" then return end
+        if rotate~="0" and rotate~="1" then return mapIndex,0 end
         local facing=rotate=="1" and read(GetPlayerFacing) or 0
-        if not numeric(facing) then return end
+        if not numeric(facing) then return mapIndex,0 end
+        local cos,sin=math.cos(facing),math.sin(facing)
         local index=0
         eachSpot(p.map, function(n)
             -- your own finds always show; guide spots only when your skill is high enough for them
             if valid(n) and skills[n.kind] and (n.source~="guide" or canUse(n)) then
                 local east,north=(n.x-p.x)*p.w,(p.y-n.y)*p.h
-                local dx=(east*math.cos(facing)+north*math.sin(facing))/radius
-                local dy=(-east*math.sin(facing)+north*math.cos(facing))/radius
+                local dx=(east*cos+north*sin)/radius
+                local dy=(-east*sin+north*cos)/radius
                 -- Keep the entire marker inside a round minimap, including its border.
                 if dx*dx+dy*dy<0.88*0.88 then
                     index=index+1
@@ -654,6 +658,17 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
                 end
             end
         end)
+        return mapIndex,index
+    end
+    local mapCount,miniCount=0,0
+    function PP:HarvestPinsUpdate()
+        local usedMap,usedMini=0,0
+        if self.db and self.db.harvestMarkers~=false then
+            usedMap,usedMini=placePins()
+        end
+        for i=usedMap+1,mapCount do mapPins[i]:Hide() end
+        for i=usedMini+1,miniCount do miniPins[i]:Hide() end
+        mapCount,miniCount=usedMap,usedMini
     end
     local pinsDriver=CreateFrame("Frame")
     local pinsTick=0
@@ -687,21 +702,23 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         -- Some minimap tooltip updates do not fire the data callback again.
         -- Read only the visible tooltip while the pointer is over the minimap.
         local overMap=Minimap and read(Minimap.IsMouseOver,Minimap)==true
-        local tipShown=GameTooltip and read(GameTooltip.IsShown,GameTooltip)==true
         if overMap then
             -- Ask the game what is under the pointer. This does not depend on which addon draws the tooltip.
             local data=C_TooltipInfo and read(C_TooltipInfo.GetMinimapMouseover)
-            if data then PP:HarvestMinimapHint(data) end
-            local lines={}
-            if tipShown then
+            if data and PP:HarvestMinimapHint(data) then return end
+            if GameTooltip and read(GameTooltip.IsShown,GameTooltip)==true then
+                local lines={}
                 for i=1,math.min(read(GameTooltip.NumLines,GameTooltip) or 0,12) do
                     local region=_G["GameTooltipTextLeft"..i]
                     local value=region and text(read(region.GetText,region))
                     if value then lines[#lines+1]={leftText=value} end
                 end
+                if #lines>0 then
+                    if PP:HarvestMinimapHint({lines=lines}) then return end
+                elseif not data then
+                    trace("Over the minimap with a tooltip, but the game hides its text")
+                end
             end
-            if not data and #lines>0 then PP:HarvestMinimapHint({lines=lines}) end
-            if not data and #lines==0 and tipShown then trace("Over the minimap with a tooltip, but the game hides its text") end
         end
         if nodeDebug.enabled then
             -- with debug on, a hidden error in the arrow code is written down instead of lost
