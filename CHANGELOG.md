@@ -2,6 +2,12 @@
 
 Every released version, newest first.
 
+## 1.4.4 (2026-11-17)
+
+- The **Show the minimap button** checkbox in Settings now updates right away when you type `/prof minimap`.
+
+Type `/reload` after updating.
+
 ## 1.4.3 (2026-11-17)
 
 - **Minimap button.** Left-click opens the guide, right-click opens Settings, and you can drag it around the minimap. Hide it with **Show the minimap button** in Settings, or type `/prof minimap`. It hides while the Gathering HUD is up.

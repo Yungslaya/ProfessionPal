@@ -96,6 +96,7 @@ ProfessionPal works fine without it.
 
 ## What's new
 
+- **1.4.4:** The minimap checkbox in Settings follows `/prof minimap`. Type `/reload` after updating.
 - **1.4.3:** New minimap button to open the guide (right-click for Settings). Fully restart WoW after updating.
 - **1.4.2:** The Gathering HUD no longer causes an error in the quest tracker. Type `/reload` after updating.
 - **1.4.1:** Farm Planner fixes: button names stay next to their icons, and the scroll note no longer covers the bottom line. Type `/reload` after updating.

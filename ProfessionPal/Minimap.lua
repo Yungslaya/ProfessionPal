@@ -83,6 +83,10 @@ function PP:MinimapButtonCommand()
     if not self.db then return end
     self.db.minimapButton = not self.db.minimapButton
     self:MinimapButtonUpdate()
+    -- keep the Settings checkbox in step if Settings is open
+    for _, check in ipairs(self.settings and self.settings.checks or {}) do
+        if check.refresh then check:refresh() end
+    end
     self:Print(self.db.minimapButton and "Minimap button shown." or "Minimap button hidden. Type /prof minimap to bring it back.")
 end
 
