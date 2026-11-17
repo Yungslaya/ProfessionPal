@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="PROFESSIONPAL_HUD" header="PROFESSIONPAL" category="ADDONS">
+        ProfessionPal_ToggleGatherHUD()
+    </Binding>
+</Bindings>

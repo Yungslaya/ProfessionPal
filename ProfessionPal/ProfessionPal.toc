@@ -1,0 +1,41 @@
+## Interface: 16001
+## X-Curse-Project-ID: 1791033
+## Title: ProfessionPal
+## Notes: Simple profession leveling guide for all professions. Type /prof
+## Author: Yungslaya
+## Version: 1.3.9
+## SavedVariables: ProfessionPalDB
+## OptionalDeps: TomTom, ShortestPathForever
+## IconTexture: Interface\Icons\Trade_Mining
+
+Core.lua
+Data_Mining.lua
+Data_Blacksmithing.lua
+Data_BlacksmithingGear.lua
+Data_Herbalism.lua
+Data_Alchemy.lua
+Data_Skinning.lua
+Data_Leatherworking.lua
+Data_Tailoring.lua
+Data_Engineering.lua
+Data_Enchanting.lua
+Data_Cooking.lua
+Data_FirstAid.lua
+Data_Fishing.lua
+Data_GearOther.lua
+Data_Recipes.lua
+Gear.lua
+UI.lua
+Tracker.lua
+AutoLearn.lua
+Import.lua
+Harvest.lua
+GatherHUD.lua
+GatherCount.lua
+FarmGuide.lua
+Data_Nodes.lua
+Data_Farm.lua
+MapGuide.lua
+FarmPlanner.lua
+FarmDebug.lua
+Notices.lua
