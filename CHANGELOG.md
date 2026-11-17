@@ -2,6 +2,16 @@
 
 Every released version, newest first.
 
+## 1.4.0 (2026-11-17)
+
+- **A rebuilt Farm Planner.** Big Mining, Herbalism and Skinning tabs, item icons, and one short line per zone: how many spots, the zone level and how far away it is.
+- **Leather works like ore and herbs.** Pick a leather and the map shows the spots where skinnable beasts of the right level spawn, with a loop to ride. No more "directions only" pins.
+- **BEST leather zones** from Wowhead's leather farming guide and Icy Veins' WoW: Forever skinning routes: Loch Modan or The Barrens for Light Leather, Wetlands or Hillsbrad for Medium, Stranglethorn Vale and Arathi for Heavy, Tanaris and Feralas for Thick, and Winterspring and Un'Goro for Rugged.
+- **Real travel times.** With Shortest Path Forever installed, "min away" counts flights and boats. Without it, ProfessionPal still gives its own estimate.
+- **Gathering HUD:** it now always hides as soon as a fight starts, and comes back when the fight ends.
+
+Fully restart WoW after updating (a new file was added).
+
 ## 1.3.9 (2026-11-17)
 
 - **Skinning in the Farm Planner.** A new Skinning tab covers Light, Medium, Heavy, Thick and Rugged Leather, with the best farming spots for your faction, the creature levels and the Skinning skill you need. These picks come from Classic farming guides, so WoW: Forever drop rates may differ.

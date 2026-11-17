@@ -1,4 +1,4 @@
-ProfessionPal 1.3.9  -  a profession leveling guide for WoW: Forever
+ProfessionPal 1.4.0  -  a profession leveling guide for WoW: Forever
 ===================================================================
 
 Every profession, skill 1 to 300, inside the game. Type /prof.
@@ -77,6 +77,7 @@ To see Lua errors in game, type:  /console scriptErrors 1
 Known limits: crafting steps above 225 come from Wowhead's planner and
 are not all checked in game yet; gear picks are ranked by item stats.
 
+1.4.0: New Farm Planner. Leather shows beast spots on the map like ore and herbs. HUD hides in fights. Fully restart WoW after updating.
 1.3.9: Skinning tab in the Farm Planner, Market Ledger prices, /prof debug. Fully restart WoW after updating.
 1.3.8: Tells you when a newer version is out. Fully restart WoW after updating.
 1.3.7: BEST marks the top farm zones. Type /reload after updating.

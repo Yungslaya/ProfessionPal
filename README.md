@@ -51,12 +51,14 @@ Saved minimap marks show places a node *can* spawn, good to about 40 yards. A no
 
 ## Farm Planner
 
-Type `/prof farm` or click **Farm Planner** at the top of the window. Pick what to farm two ways:
+Type `/prof farm` or click **Farm Planner** at the top of the window. Pick **Mining**, **Herbalism** or **Skinning** at the top, then:
 
-- **By ore / herb:** pick Iron Ore and see every zone that has it, closest first, with spot counts and zone levels.
-- **By zone:** pick a zone and choose a plan there: one ore or herb, **All ore you can mine**, **All herbs you can pick**, or **Ore and herbs** if you have both.
+- **By material:** pick something like Iron Ore or Thick Leather and see every zone that has it.
+- **By zone:** pick a zone and choose what to farm there, including **All ore you can mine**, **All herbs you can pick** and **All leather you can skin**.
 
-Green means your skill can gather it now. A gold **BEST** marks the top 1 or 2 zones for each ore and herb, picked from Wowhead's ranked farming guides and Icy Veins' WoW: Forever routes (good loops, spots close together), and they are listed first. **Go** opens the map with the spots and a loop to follow, just like the guide's Map buttons.
+All three work the same way. Each zone shows its spots (for leather: the beasts you can skin), the zone level and how far away it is. A gold **BEST** marks the top 1 or 2 zones for each ore, herb and leather, picked from Wowhead's ranked farming guides and Icy Veins' WoW: Forever routes, and they are listed first. **Map** opens the map with every spot and a loop to ride.
+
+Leather spots are where skinnable beasts of the right level spawn, from the Wowhead WoW: Forever database. Travel times come from [Shortest Path Forever](https://github.com/cjber/shortest-path-forever) when you have it installed.
 
 ## Gathering HUD
 
@@ -94,6 +96,7 @@ ProfessionPal works fine without it.
 
 ## What's new
 
+- **1.4.0:** A rebuilt **Farm Planner**: leather now shows beast spots and a loop on the map, just like ore and herbs, with **BEST** leather zones from the farming guides. Real travel times with Shortest Path Forever. The Gathering HUD now always hides in fights. Fully restart WoW after updating.
 - **1.3.9:** New **Skinning** tab in the Farm Planner with the best leather farms, Market Ledger prices for your materials, and `/prof debug` problem reports. Fully restart WoW after updating.
 - **1.3.8:** A message tells you when a newer version is out in the CurseForge app. Fully restart WoW after updating (a new file was added).
 - **1.3.7:** The Farm Planner marks the **BEST** 1 or 2 zones for each ore and herb, from Wowhead's and Icy Veins' farming guides. Type `/reload` after updating.
@@ -142,6 +145,6 @@ Crafting steps above skill 225 come from Wowhead's planner and haven't all been 
 ## Credits
 
 - Guides built from the [Icy Veins WoW: Forever profession guides](https://www.icy-veins.com/wow-forever/professions-overview) and the [Wowhead WoW: Forever](https://www.wowhead.com/forever/guides/professions) item database.
-- Ore and herb spots from the [Wowhead WoW: Forever database](https://www.wowhead.com/forever).
-- Best farming zones from Wowhead's [mining](https://www.wowhead.com/classic/guide/classic-mining-best-farming-basics-early-ores) and herbalism ([1-150](https://www.wowhead.com/classic/guide/classic-herbalism-best-farming-basics-early-herbs), [150-300](https://www.wowhead.com/classic/guide/classic-herbalism-best-farming-high-end-herbs)) farming guides and the [Icy Veins WoW: Forever mining](https://www.icy-veins.com/wow-forever/mining-leveling-guide) and [herbalism](https://www.icy-veins.com/wow-forever/herbalism-leveling-guide) leveling guides.
+- Ore, herb and beast spots from the [Wowhead WoW: Forever database](https://www.wowhead.com/forever).
+- Best farming zones from Wowhead's [mining](https://www.wowhead.com/classic/guide/classic-mining-best-farming-basics-early-ores) and herbalism ([1-150](https://www.wowhead.com/classic/guide/classic-herbalism-best-farming-basics-early-herbs), [150-300](https://www.wowhead.com/classic/guide/classic-herbalism-best-farming-high-end-herbs)) and [leather](https://www.wowhead.com/classic/guide/classic-leather-farming-early-leather) farming guides and the [Icy Veins WoW: Forever mining](https://www.icy-veins.com/wow-forever/mining-leveling-guide) and [herbalism](https://www.icy-veins.com/wow-forever/herbalism-leveling-guide) leveling guides, plus the [Icy Veins WoW: Forever skinning guide](https://www.icy-veins.com/wow-forever/skinning-leveling-guide).
 - Road routes by [Shortest Path Forever](https://github.com/cjber/shortest-path-forever) by cjber (optional).

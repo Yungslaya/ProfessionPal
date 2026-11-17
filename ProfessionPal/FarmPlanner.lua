@@ -1,11 +1,12 @@
 --[[ ProfessionPal - Farm Planner (/prof farm)
 
-  Pick what to farm two ways:
-    By material: choose ore, herbs or leather and see farming destinations.
-    By zone:       choose a zone, see the farm plans there (one ore, all ore, all herbs, both).
-  Starting a plan uses the map guide (PP:ShowZoneOnMap): dots, the loop, and the way there.
-  Skinning uses faction-specific Data_Skinning guide areas, not mapped beast spawns.
-  Spot data is Data_Nodes.lua (Wowhead Forever spawns); levels are Data_Farm.lua's ZONE_LEVEL.
+  Mining, Herbalism and Skinning all work the same way:
+    By material: pick an ore, herb or leather and see every zone that has it, the guides' BEST zones first.
+    By zone:     pick a zone and see what you can farm there.
+  Map opens the zone with every spot and a loop to ride (PP:ShowZoneOnMap), and starts the way there.
+  Spots: Data_Nodes.lua (veins and herbs) and Data_Beasts.lua (skinnable beasts), both from Wowhead WoW: Forever.
+  BEST zones: Data_Farm.lua BEST_ZONES (Wowhead farming guides + Icy Veins Forever routes).
+  Travel times: Shortest Path Forever when it is installed, otherwise ProfessionPal's own estimate.
 ]]
 
 local _, PP = ...
@@ -13,7 +14,11 @@ local C = PP.C
 
 -- extra node kinds that drop the same thing
 local MORE_NODES = { ["Thorium Ore"] = { "Rich Thorium Vein" } }
-local VERB = { mining = "Mine", herbalism = "Pick", skinning = "Farm" }
+local VERB = { mining = "Mine", herbalism = "Pick", skinning = "Skin" }
+local PROFS = { "mining", "herbalism", "skinning" }
+local PROF_NAME = { mining = "Mining", herbalism = "Herbalism", skinning = "Skinning" }
+local PROF_ICON = { mining = "Interface\\Icons\\Trade_Mining", herbalism = "Interface\\Icons\\Trade_Herbalism",
+                    skinning = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01" }
 
 local function spots(code)
     return tonumber(type(code) == "string" and code:match("^(%d+):") or "") or 0
@@ -21,6 +26,19 @@ end
 
 local function zoneName(map)
     for name, id in pairs(PP.ZONE_MAP or {}) do if id == map then return name end end
+end
+
+-- "391 beasts" for leather, "120 spots" for veins and herbs
+local function spotWord(prof, n)
+    return n .. (prof == "skinning" and " beasts" or " spots")
+end
+
+local function itemIcon(id)
+    if not id then return nil end
+    local get = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
+    if not get then return nil end
+    local ok, icon = pcall(get, id)
+    if ok and (type(icon) == "number" or type(icon) == "string") then return icon end
 end
 
 -- your skill per gathering profession (nil = you don't know it)
@@ -35,12 +53,13 @@ function PP:GatherSkills()
     return have
 end
 
--- Every ore and herb that has mapped spots: { name, prof, skill, nodes = { node names }, zones = { map = spots } }
+-- Every ore, herb and leather that has mapped spots:
+-- { id, name, prof, skill, nodes = { node names }, zones = { map = spots } }
 function PP:FarmPlannerItems()
     if self.farmPlannerItems then return self.farmPlannerItems end
     local list = {}
     for _, f in ipairs(self.FARMABLE or {}) do
-        if (f.prof == "mining" or f.prof == "herbalism") and f.node then
+        if (f.prof == "mining" or f.prof == "herbalism" or f.prof == "skinning") and f.node then
             local item = { id = f.id, name = f.name, prof = f.prof, skill = f.skill or 1, nodes = {}, zones = {} }
             local names = { f.node }
             for _, extra in ipairs(MORE_NODES[f.name] or {}) do names[#names + 1] = extra end
@@ -55,38 +74,6 @@ function PP:FarmPlannerItems()
             end
             if next(item.zones) then list[#list + 1] = item end
         end
-    end
-    -- Reuse faction-specific guide areas; leather has no mapped node spawns.
-    local leather = {}
-    for _, def in ipairs(self.professions or {}) do
-        if def.key == "skinning" then
-            for _, step in ipairs(def.steps or {}) do
-                for _, node in ipairs(step.nodes or {}) do
-                    local item = leather[node[1]]
-                    if not item then
-                        item = { id = node[3], name = node[1], prof = "skinning", skill = step.from,
-                                 nodes = {}, zones = {}, areas = {} }
-                        leather[node[1]] = item
-                    end
-                    for _, area in ipairs((step.zoneList or {})[self:Faction()] or {}) do
-                        local map = self.ZONE_MAP[area[1]]
-                        if map and not item.areas[map] then
-                            item.zones[map] = 0
-                            item.areas[map] = { skill = step.from, tip = area[2] ~= "" and area[2] or step.tip }
-                        end
-                    end
-                end
-            end
-        end
-    end
-    for name, item in pairs(leather) do
-        for _, farm in ipairs((self.SKINNING_FARMS or {})[name] or {}) do
-            if (self:SkinningFarmRank(farm) or farm.expansion == "Forever") and zoneName(farm.map) then
-                item.zones[farm.map] = 0
-                item.areas[farm.map] = farm
-            end
-        end
-        if next(item.zones) then list[#list + 1] = item end
     end
     local order = { mining = 1, herbalism = 2, skinning = 3 }
     table.sort(list, function(a, b)
@@ -113,11 +100,11 @@ end
 
 local function joinNames(items)
     local names = {}
-    for _, item in ipairs(items) do names[#names + 1] = item.name:gsub(" Ore$", "") end
+    for _, item in ipairs(items) do names[#names + 1] = (item.name:gsub(" Ore$", "")) end
     return table.concat(names, ", ")
 end
 
--- A plan = { title, what, nodes = { { node name }, ... }, prof, skill (highest needed), detail }
+-- A plan = { title, what, nodes = { { node name }, ... }, prof, skill (highest needed), items }
 local function plan(title, items, prof)
     local nodes, top = {}, 0
     for _, item in ipairs(items) do
@@ -129,7 +116,7 @@ local function plan(title, items, prof)
              items = items }
 end
 
--- Plans for one zone: each ore / herb alone, then all ore, all herbs, and everything.
+-- Plans for one zone: each material alone, then all ore, all herbs, all leather, and ore + herbs.
 -- Only things your skill can gather go into the "all" plans (when you know that profession).
 function PP:FarmZonePlans(map)
     local have = self:GatherSkills()
@@ -137,23 +124,15 @@ function PP:FarmZonePlans(map)
     for _, item in ipairs(self:FarmPlannerItems()) do
         if item.zones[map] then
             singles[#singles + 1] = plan(item.name, { item }, item.prof)
-            singles[#singles].spots = item.prof ~= "skinning" and item.zones[map] or nil
-            if item.areas then
-                singles[#singles].skill = item.areas[map].skill
-                singles[#singles].detail = item.areas[map].tip
-                singles[#singles].area = item.areas[map]
-            end
+            singles[#singles].spots = item.zones[map]
             local skill = have[item.prof]
             if skill == nil or skill >= item.skill then table.insert(byProf[item.prof], item) end
         end
     end
     local plans = {}
-    if #byProf.mining >= 2 then
-        plans[#plans + 1] = plan("All ore you can mine", byProf.mining, "mining")
-    end
-    if #byProf.herbalism >= 2 then
-        plans[#plans + 1] = plan("All herbs you can pick", byProf.herbalism, "herbalism")
-    end
+    if #byProf.mining >= 2 then plans[#plans + 1] = plan("All ore you can mine", byProf.mining, "mining") end
+    if #byProf.herbalism >= 2 then plans[#plans + 1] = plan("All herbs you can pick", byProf.herbalism, "herbalism") end
+    if #byProf.skinning >= 2 then plans[#plans + 1] = plan("All leather you can skin", byProf.skinning, "skinning") end
     if #byProf.mining >= 1 and #byProf.herbalism >= 1 and have.mining and have.herbalism then
         local both = {}
         for _, item in ipairs(byProf.mining) do both[#both + 1] = item end
@@ -189,20 +168,12 @@ function PP:FarmPlannerZones()
     return list
 end
 
--- Planner-only recommendations: leave the shared ore/herb rankings and leveling guides unchanged.
-function PP:FarmPlannerBestZoneRank(itemName, map)
-    for _, farm in ipairs((self.SKINNING_FARMS or {})[itemName] or {}) do
-        if farm.map == map then return self:SkinningFarmRank(farm) end
-    end
-    return self:BestZoneRank(itemName, map)
-end
-
--- Zones for one ore / herb: the guides' best zones first, then closest first, the most spots breaking ties.
+-- Zones for one material: the guides' best zones first, then closest first, the most spots breaking ties.
 function PP:FarmItemZones(item)
     local list = {}
     for map, count in pairs(item.zones) do
         list[#list + 1] = { map = map, name = zoneName(map), spots = count, away = self:TravelTime(map, 50, 50),
-                            here = self:CurrentMap() == map, best = self:FarmPlannerBestZoneRank(item.name, map) }
+                            here = self:CurrentMap() == map, best = self:BestZoneRank(item.name, map) }
     end
     table.sort(list, function(a, b)
         if (a.best or 99) ~= (b.best or 99) then return (a.best or 99) < (b.best or 99) end
@@ -215,37 +186,16 @@ function PP:FarmItemZones(item)
     return list
 end
 
--- Is this zone a best zone for every ore / herb in the plan?
+-- Is this zone a best zone for the one material in the plan?
 local function bestFor(p, map)
     if not (p.items and #p.items == 1) then return nil end
-    return PP:FarmPlannerBestZoneRank(p.items[1].name, map)
+    return PP:BestZoneRank(p.items[1].name, map)
 end
-
--- Farming skill range reflects target levels, not a leveling-guide stage.
-local function skinningDetail(area)
-    if not area.maxSkill then return "Leveling area - guide skill " .. area.skill .. ". " .. area.tip end
-    local text = "Skinning " .. area.skill .. "-" .. area.maxSkill .. " / mobs " .. area.levels .. ". " .. area.tip
-    local have = PP:GatherSkills().skinning
-    if not have then text = "Skinning skill not detected; open your profession window and recheck. " .. text
-    elseif have < area.skill then text = "Needs higher Skinning. " .. text
-    elseif have < area.maxSkill then text = "Some targets need higher Skinning. " .. text end
-    return text .. (area.expansion == "Forever" and " Recorded Forever skinning location; yields vary." or " Classic farming recommendation; Forever yields may differ.")
-end
-PP.SkinningFarmDetail = skinningDetail
 
 -- Start a plan: the map opens on the zone with the dots and the loop, and the way there starts.
 function PP:StartFarmPlan(p, map)
     local name = zoneName(map)
     if not (name and self.ShowZoneOnMap) then return false end
-    if p.prof == "skinning" then
-        local area = p.items[1].areas[map]
-        if not (area and self.SetGuideTarget) then return false end
-        local target = { m = map, x = area.x, y = area.y, title = name, what = p.what,
-            groups = {}, skinning = true, areaOnly = not (area.x and area.y),
-            note = (area.x and "Recorded hunting area. " or "Directions only; no verified destination pin. ") .. skinningDetail(area) }
-        if self.FarmDebugLog then self:FarmDebugLog("skinning-plan", name .. " / " .. p.what) end
-        return self:SetGuideTarget(target)
-    end
     local text = bestFor(p, map) and (p.what .. " (best zone)") or p.what
     return self:ShowZoneOnMap({ text = text, nodes = p.nodes }, name)
 end
@@ -377,7 +327,12 @@ function PP:ShowMarketLedgerInfo()
 end
 
 -- ---------- the window ----------
-local LEFT_ROWS, RIGHT_ROWS = 12, 7
+-- Big, plain and easy to read: profession tabs on top, materials (or zones) on the left,
+-- one card per zone on the right with one short line of facts and a Map button.
+local W, H = 860, 610
+local LEFT_ROWS, RIGHT_ROWS = 11, 7
+local LEFT_X, RIGHT_X, LIST_Y = 20, 300, -168
+local LEFT_W, RIGHT_W, ROW_H, CARD_H = 262, 540, 36, 58
 local frame
 
 local function canColor(prof, skill)
@@ -386,48 +341,93 @@ local function canColor(prof, skill)
     return have >= skill and C.green or C.gray
 end
 
+-- an icon picture (a do-nothing stand-in if the frame can't hold one)
+local NO_ICON = {}
+for _, m in ipairs({ "SetTexture", "SetSize", "SetPoint", "SetTexCoord", "Show", "Hide", "ClearAllPoints" }) do
+    NO_ICON[m] = function() end
+end
+local function iconTexture(parent, size)
+    local icon = parent.CreateTexture and parent:CreateTexture(nil, "ARTWORK")
+    if not icon then return NO_ICON end
+    icon:SetSize(size, size)
+    icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    return icon
+end
+
+-- a button with an icon on its left
+local function iconButton(parent, w, h, onClick)
+    local b = PP.UIButton(parent, "", w, h, onClick)
+    b.icon = iconTexture(b, h - 8)
+    b.icon:SetPoint("LEFT", b, "LEFT", 5, 0)
+    local fs = b.GetFontString and b:GetFontString()
+    if fs then
+        fs:ClearAllPoints()
+        fs:SetPoint("LEFT", b, "LEFT", h + 2, 0)
+        fs:SetPoint("RIGHT", b, "RIGHT", -8, 0)
+        fs:SetJustifyH("LEFT")
+    end
+    return b
+end
+
 function PP:BuildFarmPlanner()
     if frame then return frame end
-    local f = PP.UIWindow("ProfessionPalFarmPlanner", 840, "ProfessionPal  /  Farm Planner")
+    local f = PP.UIWindow("ProfessionPalFarmPlanner", W, "Farm Planner")
     frame = f
-    f:SetHeight(620)
+    f:SetHeight(H)
     -- shrink to fit small screens (the screen size can be missing very early in loading)
     local screenW, screenH = UIParent:GetWidth(), UIParent:GetHeight()
     if type(screenW) == "number" and type(screenH) == "number" and screenW > 0 and screenH > 0 then
-        f:SetScale(math.min(1, screenW / 880, screenH / 660))
+        f:SetScale(math.min(1, screenW / (W + 40), screenH / (H + 40)))
     end
     f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
     f.mode = PP.db.farmPlannerMode == "zone" and "zone" or "item"
     f.offset = 0
 
-    f.byItem = PP.UIButton(f, "By material", 150, 28, function() PP:FarmPlannerMode("item") end)
-    f.byItem:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -50)
-    f.byZone = PP.UIButton(f, "By zone", 150, 28, function() PP:FarmPlannerMode("zone") end)
-    f.byZone:SetPoint("LEFT", f.byItem, "RIGHT", 8, 0)
-
+    -- profession tabs
     f.filters = {}
-    for i, key in ipairs({ "mining", "herbalism", "skinning" }) do
-        local names = { mining = "Mining", herbalism = "Herbalism", skinning = "Skinning" }
-        local b = PP.UIButton(f, names[key], 150, 28, function()
+    for i, key in ipairs(PROFS) do
+        local b = iconButton(f, 172, 40, function()
             f.prof, f.picked, f.offset, f.rightOffset = key, nil, 0, 0
+            PP.db.farmPlannerProf = key
             PP:RefreshFarmPlanner()
         end)
-        b:SetPoint("TOPLEFT", f, "TOPLEFT", 20 + (i - 1) * 158, -86)
+        b:SetPoint("TOPLEFT", f, "TOPLEFT", LEFT_X + (i - 1) * 180, -50)
+        b.icon:SetTexture(PROF_ICON[key])
+        b:SetText(PROF_NAME[key])
         f.filters[key] = b
     end
-    f.prof = "mining"
-    for _, key in ipairs({ "mining", "herbalism", "skinning" }) do
-        if PP:GatherSkills()[key] then f.prof = key; break end
+    f.prof = PP.db.farmPlannerProf
+    if not f.filters[f.prof] then
+        f.prof = "mining"
+        for _, key in ipairs(PROFS) do
+            if PP:GatherSkills()[key] then f.prof = key; break end
+        end
     end
+    f.byItem = PP.UIButton(f, "By material", 124, 40, function() PP:FarmPlannerMode("item") end)
+    f.byItem:SetPoint("TOPRIGHT", f, "TOPRIGHT", -152, -50)
+    f.byZone = PP.UIButton(f, "By zone", 124, 40, function() PP:FarmPlannerMode("zone") end)
+    f.byZone:SetPoint("LEFT", f.byItem, "RIGHT", 8, 0)
 
-    -- material price (item view): Market Ledger's saved price, or an optional hint when it is missing
-    f.price = PP.UIText(f, 13, C.white)
-    f.price:SetPoint("TOPLEFT", f, "TOPLEFT", 500, -92)
-    f.price:SetWidth(316)
+    -- header of the right side: big icon, name, one line about your skill, and the price
+    f.headIcon = iconTexture(f, 44)
+    f.headIcon:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X, -104)
+    f.rightHead = PP.UIText(f, 20, C.gold)
+    f.rightHead:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X + 54, -104)
+    f.rightHead:SetWidth(RIGHT_W - 54)
+    if f.rightHead.SetWordWrap then f.rightHead:SetWordWrap(false) end
+    f.skillLine = PP.UIText(f, 14, C.gray)
+    f.skillLine:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X + 54, -130)
+    f.skillLine:SetWidth(220)
+
+    -- material price (Market Ledger, optional): text, a hover for details, or a hint when it is missing
+    f.price = PP.UIText(f, 14, C.white)
+    f.price:SetPoint("TOPRIGHT", f, "TOPRIGHT", -20, -130)
+    f.price:SetWidth(250)
+    f.price:SetJustifyH("RIGHT")
     if f.price.SetWordWrap then f.price:SetWordWrap(false) end
     f.priceHover = CreateFrame("Frame", nil, f)
-    f.priceHover:SetPoint("TOPLEFT", f, "TOPLEFT", 496, -84)
-    f.priceHover:SetSize(320, 30)
+    f.priceHover:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -124)
+    f.priceHover:SetSize(290, 26)
     f.priceHover:EnableMouse(true)
     f.priceHover:SetScript("OnEnter", function(hover)
         -- worked out now, so the age is current and matches the selected material
@@ -439,73 +439,69 @@ function PP:BuildFarmPlanner()
         GameTooltip:Show()
     end)
     f.priceHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    f.priceHint = PP.UIButton(f, "Optional prices: Market Ledger", 224, 28, function() PP:ShowMarketLedgerInfo() end)
-    f.priceHint:SetPoint("TOPLEFT", f, "TOPLEFT", 500, -86)
-    f.priceDismiss = PP.UIButton(f, "Dismiss", 80, 28, function()
+    f.priceHint = PP.UIButton(f, "Prices: Market Ledger", 170, 26, function() PP:ShowMarketLedgerInfo() end)
+    f.priceHint:SetPoint("TOPRIGHT", f, "TOPRIGHT", -78, -124)
+    f.priceDismiss = PP.UIButton(f, "Hide", 54, 26, function()
         PP.db.farmMarketHintDismissed = true
         PP:RefreshFarmPlanner()
     end)
-    f.priceDismiss:SetPoint("LEFT", f.priceHint, "RIGHT", 8, 0)
+    f.priceDismiss:SetPoint("LEFT", f.priceHint, "RIGHT", 4, 0)
 
-    f.debug = PP.UIButton(f, "Debug", 80, 28, function() if PP.FarmDebugCommand then PP:FarmDebugCommand("on") end end)
-    f.debug:SetPoint("TOPRIGHT", f, "TOPRIGHT", -20, -50)
-    f.leftHead = PP.UIText(f, 15, C.gold); f.leftHead:SetPoint("TOPLEFT", f, "TOPLEFT", 22, -130)
-    f.rightHead = PP.UIText(f, 15, C.gold); f.rightHead:SetPoint("TOPLEFT", f, "TOPLEFT", 284, -130)
-    f.rightHead:SetWidth(530)
-
+    -- left list: materials or zones
+    f.leftHead = PP.UIText(f, 15, C.gold)
+    f.leftHead:SetPoint("TOPLEFT", f, "TOPLEFT", LEFT_X + 2, -114)
     f.left = {}
     for i = 1, LEFT_ROWS do
-        local b = PP.UIButton(f, "", 244, 30, function(self) PP:FarmPlannerPick(self.value) end)
-        b:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -154 - (i - 1) * 34)
+        local b = iconButton(f, LEFT_W, ROW_H - 4, function(self) PP:FarmPlannerPick(self.value) end)
+        b:SetPoint("TOPLEFT", f, "TOPLEFT", LEFT_X, LIST_Y + 28 - (i - 1) * ROW_H)
         b:Hide()
         f.left[i] = b
     end
-    -- the left list scrolls with the mouse wheel
     f:EnableMouseWheel(true)
     f:SetScript("OnMouseWheel", function(_, delta)
         local total = #(f.leftValues or {})
         f.offset = math.max(0, math.min(f.offset - delta * 3, total - LEFT_ROWS))
         PP:RefreshFarmPlanner()
     end)
-    f.more = PP.UIText(f, 12, C.gray); f.more:SetPoint("TOPLEFT", f, "TOPLEFT", 22, -154 - LEFT_ROWS * 34)
+    f.more = PP.UIText(f, 13, C.gray)
+    f.more:SetPoint("TOPLEFT", f, "TOPLEFT", LEFT_X + 2, LIST_Y + 28 - LEFT_ROWS * ROW_H - 4)
 
+    -- right list: one card per zone (or plan)
     f.right = {}
     for i = 1, RIGHT_ROWS do
         local r = CreateFrame("Frame", nil, f, "BackdropTemplate")
         PP.Skin(r, nil, { bg = PP.THEME.inset, border = PP.THEME.btnBorder })
-        r:SetSize(530, 54)
-        r:SetPoint("TOPLEFT", f, "TOPLEFT", 284, -154 - (i - 1) * 58)
-        r.name = PP.UIText(r, 15, C.white); r.name:SetPoint("TOPLEFT", r, "TOPLEFT", 10, -7); r.name:SetWidth(410)
-        r.sub = PP.UIText(r, 13, C.gray); r.sub:SetPoint("TOPLEFT", r, "TOPLEFT", 10, -27); r.sub:SetWidth(410)
-        r.sub:SetHeight(18)
-        r.sub:SetWordWrap(false)
-        r.name:SetWordWrap(false)
-        r:SetScript("OnEnter", function()
-            GameTooltip:SetOwner(r, "ANCHOR_RIGHT")
-            GameTooltip:SetText(r.name:GetText())
-            GameTooltip:AddLine(r.sub:GetText(), 1, 1, 1, true)
-            GameTooltip:Show()
-        end)
-        r:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        r:SetSize(RIGHT_W, CARD_H - 4)
+        r:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X, LIST_Y - (i - 1) * CARD_H)
+        r.best = PP.UIText(r, 13, C.gold)
+        r.best:SetPoint("TOPRIGHT", r, "TOPRIGHT", -112, -8)
+        r.name = PP.UIText(r, 17, C.white)
+        r.name:SetPoint("TOPLEFT", r, "TOPLEFT", 12, -7)
+        r.name:SetWidth(RIGHT_W - 130)
+        r.sub = PP.UIText(r, 14, C.gray)
+        r.sub:SetPoint("TOPLEFT", r, "TOPLEFT", 12, -30)
+        r.sub:SetWidth(RIGHT_W - 130)
+        if r.sub.SetWordWrap then r.sub:SetWordWrap(false) end
+        if r.name.SetWordWrap then r.name:SetWordWrap(false) end
         r:EnableMouse(true)
-        r.go = PP.UIButton(r, "Map", 80, 30, function()
+        r.go = PP.UIButton(r, "Map", 92, 38, function()
             if r.plan and r.map then
                 if PP:StartFarmPlan(r.plan, r.map) then f:Hide() end
             end
         end)
-        r.go:SetPoint("RIGHT", r, "RIGHT", -10, 0)
+        r.go:SetPoint("RIGHT", r, "RIGHT", -8, 0)
         r:Hide()
         f.right[i] = r
     end
     -- the right list scrolls on its own when the mouse is over it
     local wheel = CreateFrame("Frame", nil, f)
-    wheel:SetPoint("TOPLEFT", f, "TOPLEFT", 280, -150); wheel:SetSize(538, RIGHT_ROWS * 58)
+    wheel:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X - 4, LIST_Y + 4)
+    wheel:SetSize(RIGHT_W + 8, RIGHT_ROWS * CARD_H)
     wheel:EnableMouseWheel(true)
     wheel:SetScript("OnMouseWheel", function(_, delta)
         f.rightOffset = math.max(0, math.min((f.rightOffset or 0) - delta * 2, (f.rightTotal or 0) - RIGHT_ROWS))
         PP:RefreshFarmPlanner()
     end)
-    -- Keep row buttons/tooltips above the scrolling background. Rows handle their own wheel events.
     for _, r in ipairs(f.right) do
         r:SetFrameLevel(wheel:GetFrameLevel() + 1)
         r:EnableMouseWheel(true)
@@ -514,10 +510,15 @@ function PP:BuildFarmPlanner()
         r.go:SetScript("OnMouseWheel", wheel:GetScript("OnMouseWheel"))
     end
     f.rightWheel = wheel
-    f.rightMore = PP.UIText(f, 12, C.gray); f.rightMore:SetPoint("TOPLEFT", f, "TOPLEFT", 284, -154 - RIGHT_ROWS * 58)
-    f.empty = PP.UIText(f, 14, C.gray); f.empty:SetPoint("TOPLEFT", f, "TOPLEFT", 284, -156); f.empty:SetWidth(530)
-    f.foot = PP.UIText(f, 12, C.gray); f.foot:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 22, 14); f.foot:SetWidth(796)
-    f.foot:SetText("Skinning: hunting-area route where mapped; directions otherwise. Hover a row for full details.")
+    f.rightMore = PP.UIText(f, 13, C.gray)
+    f.rightMore:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X + 2, LIST_Y - RIGHT_ROWS * CARD_H - 2)
+    f.empty = PP.UIText(f, 15, C.gray)
+    f.empty:SetPoint("TOPLEFT", f, "TOPLEFT", RIGHT_X + 4, LIST_Y - 10)
+    f.empty:SetWidth(RIGHT_W)
+    f.foot = PP.UIText(f, 13, C.gray)
+    f.foot:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", LEFT_X + 2, 14)
+    f.foot:SetWidth(W - 40)
+    f.foot:SetText("Map shows every spot and a loop to ride.   BEST = top zones in the Wowhead and Icy Veins farming guides.")
     f:SetScript("OnShow", function() PP:RefreshFarmPlanner() end)
     f:SetScript("OnHide", function() watchStale(nil) end)
     return f
@@ -536,11 +537,19 @@ function PP:FarmPlannerPick(value)
     self:RefreshFarmPlanner()
 end
 
-local function showRow(r, title, titleColor, sub, p, map)
+local function showRow(r, title, titleColor, sub, p, map, best)
     r.name:SetText(title); r.name:SetTextColor(unpack(titleColor))
     r.sub:SetText(sub or "")
+    r.best:SetText(best and "BEST" or "")
     r.plan, r.map = p, map
     r:Show()
+end
+
+local function skillText(prof, need)
+    local have = PP:GatherSkills()[prof]
+    if not have then return "Needs " .. PROF_NAME[prof] .. " " .. need, C.gray end
+    if have >= need then return "Your " .. PROF_NAME[prof] .. ": " .. have .. "  (needs " .. need .. ")", C.green end
+    return "Your " .. PROF_NAME[prof] .. ": " .. have .. "  (needs " .. need .. ")", C.orange
 end
 
 function PP:RefreshFarmPlanner()
@@ -551,11 +560,12 @@ function PP:RefreshFarmPlanner()
     for _, r in ipairs(f.right) do r:Hide() end
     f.empty:SetText("")
 
-    -- left: ores and herbs, or zones
+    -- left: materials of the chosen profession, or zones
     local values = f.mode == "item" and self:FarmPlannerItems() or self:FarmPlannerZones()
     for key, b in pairs(f.filters) do
         b:SetSelected(key == f.prof)
-        if f.mode == "item" then b:Show() else b:Hide() end
+        b:SetLabelColor(key == f.prof and C.gold or C.white)
+        b:SetShown(f.mode == "item")
     end
     if f.mode == "item" then
         local filtered = {}
@@ -568,7 +578,7 @@ function PP:RefreshFarmPlanner()
     f.offset = math.max(0, math.min(f.offset, #values - LEFT_ROWS))
     if f.picked == nil then
         if f.mode == "zone" then f.picked = values[1] else
-            -- start on the best ore or herb for your skill
+            -- start on the highest material your skill can gather
             local have = self:GatherSkills()
             for _, item in ipairs(values) do
                 local s = have[item.prof]
@@ -580,16 +590,18 @@ function PP:RefreshFarmPlanner()
             if value == f.picked then f.offset = math.max(0, math.min(i - 1, #values - LEFT_ROWS)); break end
         end
     end
-    f.leftHead:SetText(f.mode == "item" and "Material / guide skill" or "Zone")
+    f.leftHead:SetText(f.mode == "item" and "Pick a material" or "Pick a zone")
     for i = 1, LEFT_ROWS do
         local v, b = values[i + f.offset], f.left[i]
         if v then
             b.value = v
             if f.mode == "item" then
                 b:SetText(v.name .. "  (" .. v.skill .. ")")
+                b.icon:SetTexture(itemIcon(v.id) or PROF_ICON[v.prof])
                 b:SetLabelColor(canColor(v.prof, v.skill))
             else
                 b:SetText(v.name)
+                b.icon:SetTexture("Interface\\Icons\\INV_Misc_Map_01")
                 b:SetLabelColor(v.here and C.green or C.white)
             end
             b:SetSelected(v == f.picked)
@@ -598,7 +610,7 @@ function PP:RefreshFarmPlanner()
     end
     f.more:SetText(#values > LEFT_ROWS and "Scroll for more" or "")
 
-    -- right: zones for the ore, or plans for the zone
+    -- right: zones for the material, or plans for the zone
     local picked, rows = f.picked, {}
     f.rightMore:SetText("")
     local priceText, priceColor, priceTip, priceState, staleIn
@@ -609,52 +621,58 @@ function PP:RefreshFarmPlanner()
     if priceColor then f.price:SetTextColor(unpack(priceColor)) end
     f.priceTip = priceText and priceTip or nil
     f.priceHover:SetShown(priceText ~= nil)
-    f.priceHint:SetShown(hint)
-    f.priceDismiss:SetShown(hint)
+    f.priceHint:SetShown(hint and true or false)
+    f.priceDismiss:SetShown(hint and true or false)
     watchStale(staleIn)
     if GameTooltip:IsOwned(f.priceHover) then
         GameTooltip:Hide()
         if priceText then f.priceHover:GetScript("OnEnter")(f.priceHover) end
     end
-    if not picked then f.empty:SetText("No mapped spots yet."); return end
+    if not picked then
+        f.rightHead:SetText(""); f.skillLine:SetText(""); f.headIcon:Hide()
+        f.empty:SetText("Nothing to farm here yet.")
+        return
+    end
+    f.headIcon:Show()
     if f.mode == "item" then
-        f.rightHead:SetText("Where to " .. (VERB[picked.prof] or "get"):lower() .. " " .. picked.name)
+        f.headIcon:SetTexture(itemIcon(picked.id) or PROF_ICON[picked.prof])
+        f.rightHead:SetText("Where to " .. VERB[picked.prof]:lower() .. " " .. picked.name)
+        local text, color = skillText(picked.prof, picked.skill)
+        f.skillLine:SetText(text); f.skillLine:SetTextColor(unpack(color))
         local p = plan(picked.name, { picked }, picked.prof)
         local list = self:FarmItemZones(picked)
         rows = list
         for i = 1, RIGHT_ROWS do
             local z, r = list[i + (f.rightOffset or 0)], f.right[i]
             if not z then break end
-            local area = picked.areas and picked.areas[z.map]
-            local bits = area and { skinningDetail(area) } or { z.spots .. " spots" }
-            if not (area and area.levels) then bits[#bits + 1] = levelText(z.map) end
-            bits[#bits + 1] = awayText(z.map)
+            local bits = { spotWord(picked.prof, z.spots), levelText(z.map), awayText(z.map) }
             local title, color = z.name, z.here and C.green or C.white
-            if area and area.expansion == "Forever" then title = title .. "  -  FOREVER" end
-            if z.best then title, color = z.name .. (area and "  -  BEST (Classic)" or "  -  BEST"), C.gold end
-            showRow(r, title, color, table.concat(bits, "  -  "), p, z.map)
+            if z.best then title, color = z.name .. "  -  BEST", C.gold end
+            showRow(r, title, color, table.concat(bits, "   -   "), p, z.map, false)
         end
     else
-        local bits = { levelText(picked.map), awayText(picked.map) }
-        f.rightHead:SetText("Plans in " .. picked.name .. (#bits > 0 and ("   (" .. table.concat(bits, ", ") .. ")") or ""))
+        f.headIcon:SetTexture("Interface\\Icons\\INV_Misc_Map_01")
+        f.rightHead:SetText(picked.name)
+        f.skillLine:SetTextColor(unpack(C.gray))
+        f.skillLine:SetText(table.concat({ levelText(picked.map) or "", awayText(picked.map) or "" }, "   -   "))
         local plans = self:FarmZonePlans(picked.map)
         rows = plans
         for i = 1, RIGHT_ROWS do
             local p, r = plans[i + (f.rightOffset or 0)], f.right[i]
             if not p then break end
-            local sub = p.spots and (p.spots .. " spots  -  skill " .. p.skill) or joinNames(p.items)
+            local sub = p.spots and (spotWord(p.prof, p.spots) .. "   -   " .. PROF_NAME[p.prof] .. " " .. p.skill)
+                or joinNames(p.items)
             local color = p.prof and canColor(p.prof, p.skill) or C.gold
-            if not p.spots and p.prof ~= "skinning" then color = C.gold end
-            if p.area then sub = skinningDetail(p.area) end
+            if not p.spots then color = C.gold end
             local title = p.title
-            if bestFor(p, picked.map) then title = title .. (p.area and "  -  BEST (Classic)" or "  -  BEST") end
-            showRow(r, title, color, sub, p, picked.map)
+            if bestFor(p, picked.map) then title = title .. "  -  BEST" end
+            showRow(r, title, color, sub, p, picked.map, false)
         end
-        if #plans == 0 then f.empty:SetText("No mapped spots in this zone yet.") end
+        if #plans == 0 then f.empty:SetText("Nothing to farm in this zone yet.") end
     end
     f.rightTotal = #rows
     f.rightOffset = math.max(0, math.min(f.rightOffset or 0, #rows - RIGHT_ROWS))
-    if #rows > RIGHT_ROWS then f.rightMore:SetText("Scroll for more (" .. #rows .. " in all)") end
+    if #rows > RIGHT_ROWS then f.rightMore:SetText("Scroll for more  (" .. #rows .. " in all)") end
 end
 
 function PP:ToggleFarmPlanner()

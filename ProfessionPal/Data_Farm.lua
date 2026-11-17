@@ -13,7 +13,9 @@ local _, PP = ...
 
 local function ore(id, name, node, skill) return { id = id, name = name, node = node, prof = "mining", skill = skill } end
 local function herb(id, name, skill) return { id = id, name = name, node = name, prof = "herbalism", skill = skill } end
-local function hide(id, name, level) return { id = id, name = name, prof = "skinning", skill = 1, level = level } end
+-- Leather comes from beasts: node = "<Leather> beasts" (Data_Beasts.lua), skill = Skinning for the lowest-level
+-- beasts that give it (Icy Veins: level 11-20 beasts need (level-10)x10, level 20+ need level x5).
+local function hide(id, name, level, skill) return { id = id, name = name, node = name .. " beasts", prof = "skinning", skill = skill, level = level } end
 
 PP.FARMABLE = {
     ore(2770, "Copper Ore", "Copper Vein", 1), ore(2771, "Tin Ore", "Tin Vein", 65),
@@ -33,8 +35,8 @@ PP.FARMABLE = {
     herb(13465, "Mountain Silversage", 280), herb(13466, "Plaguebloom", 285), herb(13467, "Icecap", 290),
     herb(13468, "Black Lotus", 300),
 
-    hide(2318, "Light Leather", 1), hide(2319, "Medium Leather", 15), hide(4234, "Heavy Leather", 25),
-    hide(4304, "Thick Leather", 35), hide(8170, "Rugged Leather", 45),
+    hide(2318, "Light Leather", 1, 10), hide(2319, "Medium Leather", 15, 105), hide(4234, "Heavy Leather", 25, 155),
+    hide(4304, "Thick Leather", 35, 205), hide(8170, "Rugged Leather", 45, 255),
 }
 
 PP.ZONE_LEVEL = {
@@ -98,79 +100,22 @@ PP.BEST_ZONES = {
     ["Plaguebloom"] = { 1423, 1422 },         -- Eastern, Western Plaguelands
     ["Icecap"] = { 1452 },                    -- Winterspring
     ["Black Lotus"] = { 1428, 1452 },         -- Burning Steppes, Winterspring
+
+    -- Leather: Wowhead "Best Leather Farming and Leveling 1-300 Routes" (top 3 zones per leather, scored on
+    -- beast density, camps, competition and elites) and Icy Veins "WoW Forever Skinning Leveling Guide"
+    -- (Alliance / Horde routes). Zones both name; per faction where Icy Veins splits them. Read 2026-11-17.
+    ["Light Leather"] = { Alliance = { 1432, 1413 }, Horde = { 1413, 1432 } },   -- Loch Modan, The Barrens
+    ["Medium Leather"] = { Alliance = { 1437, 1424 }, Horde = { 1424, 1437 } },  -- Wetlands, Hillsbrad Foothills
+    ["Heavy Leather"] = { 1434, 1417 },       -- Stranglethorn Vale, Arathi Highlands
+    ["Thick Leather"] = { 1446, 1444 },       -- Tanaris, Feralas
+    ["Rugged Leather"] = { 1452, 1449 },      -- Winterspring, Un'Goro Crater
 }
 
 -- 1 = the best zone for this ore / herb, 2 = second best, nil = not a top pick.
 function PP:BestZoneRank(itemName, map)
-    for rank, id in ipairs(self.BEST_ZONES[itemName] or {}) do
+    local zones = self.BEST_ZONES[itemName] or {}
+    if zones.Alliance or zones.Horde then zones = zones[self.Faction and self:Faction() or "Alliance"] or {} end
+    for rank, id in ipairs(zones) do
         if id == map then return rank end
     end
-end
-
--- Targeted leather farms, reviewed 2026-11-16. Rankings are curated recommendations,
--- not measured Forever yields. Classic farming evidence is cross-checked against
--- Forever leveling guidance where available. No spawn coordinates are inferred.
--- Sources and ranking rationale: docs/skinning-farms.md (development documentation).
-PP.SKINNING_FARMS = {
-    ["Light Leather"] = {
-        { map = 1439, rank = { Alliance = 1, Horde = 2 }, skill = 60, maxSkill = 100, levels = "16-20",
-          tip = "Southern Darkshore: Moonstalker Matriarchs, Giant Foreststriders and Grizzled Thistle Bears. A lower-level alternative to Taurajo.", source = "WP-Light; WH-Forever" },
-        { map = 1413, rank = { Alliance = 2, Horde = 1 }, skill = 100, maxSkill = 110, levels = "20-22",
-          tip = "Around Camp Taurajo: Thunderhawk Cloudscrapers, Thunderheads and Zhevra Coursers. Stay clear of Horde guards as Alliance; some Medium Leather also drops.", source = "WP-Light; WH-Classic" },
-    },
-    ["Medium Leather"] = {
-        { map = 1431, rank = { Alliance = 1 }, skill = 140, maxSkill = 155, levels = "28-31",
-          tip = "Duskwood: skin worgen at Rotting Orchard and Roland's Doom, alternating the orchard and cave. Watch for respawns inside.", source = "WP-Medium; WH-Forever" },
-        { map = 1440, rank = { Horde = 1 }, skill = 140, maxSkill = 150, levels = "28-30",
-          tip = "Ashenvale: hunt Terrowulf Fleshrippers and Shadow Weavers along the approach to their cave and inside. Clear the approach again when the cave is empty.", source = "WP-Medium; WH-Forever" },
-        { map = 1437, rank = { Alliance = 2 }, skill = 125, maxSkill = 135, levels = "25-27",
-          tip = "Whelgar's Excavation Site: skin Mottled Scytheclaws and Razormaws on the dig floor. Lower-level alternative to Duskwood; higher raptors need 135 Skinning.", source = "WP-Medium; IV-Forever; WH-Classic" },
-        { map = 1424, rank = { Horde = 2 }, skill = 150, maxSkill = 160, levels = "30-32",
-          tip = "Foothill Caverns: Cave Yetis and Ferocious Yetis. A compact farm, but fast kills can leave you waiting for respawns. Avoid the roaming elite yeti.", source = "WP-Medium; WH-Classic" },
-    },
-    ["Heavy Leather"] = {
-        { map = 1434, rank = 1, skill = 200, maxSkill = 205, levels = "40-41",
-          tip = "Jungle north of Gurubashi Arena: Jungle Stalkers and Young Jungle Stalkers. Good for targeting Heavy Leather; expect competition and spread-out kills. Stay outside the arena.", source = "WP-Heavy; WH-Classic; IV-Forever" },
-        { map = 1417, rank = 2, skill = 150, maxSkill = 185, levels = "30-37",
-          tip = "Arathi raptors: begin west of Refuge Pointe, then move farther from the main road for higher-level raptors. Lower-level alternative; expect Medium Leather too.", source = "WH-Classic; IV-Forever" },
-    },
-    ["Thick Leather"] = {
-        { map = 1449, rank = 1, skill = 240, maxSkill = 255, levels = "48-51",
-          tip = "Southern Un'Goro marsh: hunt Ravasaurs, Runners, Hunters and Venomhides. A targeted Thick Leather farm with some Rugged Leather; avoid wandering elite Devilsaurs.", source = "WP-Thick; IV-Forever" },
-        { map = 1445, rank = 2, skill = 200, maxSkill = 220, levels = "40-44",
-          tip = "Dustwallow: skin dragonkin between Stonemaul Ruins and the Den of Flame. Lower-level mixed Thick/Heavy farm; use it when Un'Goro is too tough or crowded.", source = "WP-Thick; WP-Heavy" },
-    },
-    ["Rugged Leather"] = {
-        { map = 1452, rank = 1, skill = 275, maxSkill = 290, levels = "55-58",
-          tip = "South of Everlook: Ice Thistle Yetis, Matriarchs and Patriarchs outside and inside the cave. A concentrated farm, often contested; check mob levels before pulling.", source = "WP-Rugged; WH-Classic" },
-        { map = 1449, rank = 2, skill = 260, maxSkill = 275, levels = "52-55",
-          tip = "Western Un'Goro: skin Elder Diemetradons and Frenzied Pterrordaxes. A mixed Rugged/Thick alternative; avoid elite Devilsaurs and beware of pterrordax fear pulling extra enemies.", source = "WH-Classic; WP-Rugged" },
-    },
-}
-
-function PP:SkinningFarmRank(farm)
-    if type(farm.rank) == "table" then return farm.rank[self:Faction()] end
-    return farm.rank
-end
-
-
--- Recorded Forever NPC spawn points (not zone centers or a verified walking loop).
--- Selected existing point nearest the spawn-set centroid. Wowhead NPC pages, 2026-11-16:
--- 2165 Grizzled Thistle Bear; 259055 Wildplains Huntress; 251245 Prideclaw.
-for _, farm in ipairs(PP.SKINNING_FARMS["Light Leather"]) do
-    if farm.map == 1439 then
-        farm.x, farm.y, farm.npc = 40, 79.8, 2165
-        farm.tip = "Start at the recorded Grizzled Thistle Bear location in southern Darkshore, then hunt nearby bears, foreststriders and moonstalkers. The pin marks a hunting area, not a live beast."
-    end
-end
-local function foreverFarm(map, x, y, npc, skill, maxSkill, levels, tip)
-    return { map = map, x = x, y = y, npc = npc, skill = skill, maxSkill = maxSkill,
-             levels = levels, tip = tip, expansion = "Forever", source = "Wowhead Forever NPC " .. npc }
-end
--- Available alternatives, not claimed to outperform the curated best farms.
-table.insert(PP.SKINNING_FARMS["Light Leather"], foreverFarm(2521, 43.4, 47.4, 251245, 1, 1, "5-6",
-    "Zephras Isle: Prideclaws around Shen'dar Village. Skinning records include Light Leather and Ruined Leather Scraps; expect scraps at these low levels."))
-for _, material in ipairs({ "Heavy Leather", "Thick Leather" }) do
-    table.insert(PP.SKINNING_FARMS[material], foreverFarm(2548, 59.3, 53.9, 259055, 190, 195, "38-39",
-        "Riverglades: Wildplains Huntresses between Terral's Watch and Rog'mar. Recorded skins include Heavy and Thick Leather; this is mainly a Heavy Leather farm, with Thick as a secondary yield. Hunt around the marked area."))
 end

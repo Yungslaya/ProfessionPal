@@ -563,7 +563,36 @@ end
 
 -- Seconds to get from you to a map point, using boats/zeppelins/tram for your faction.
 -- nil = the game won't tell us where you are (or where that place is).
+-- Real travel time from Shortest Path Forever (flights, boats, zeppelins), when that addon is installed.
+-- nil when it isn't, is still loading, or can't find a way; then our own rough guess below is used.
+local spfCache = {}
+local function spfTravelTime(self, map, x, y)
+    local api = ShortestPathForever and ShortestPathForever.API
+    if not (type(api) == "table" and type(api.Estimate) == "function") then return nil end
+    local here = self:CurrentMap()
+    if not (here and C_Map and C_Map.GetPlayerMapPosition) then return nil end
+    local pos = safe(C_Map.GetPlayerMapPosition, here, "player")
+    if type(pos) ~= "table" then return nil end
+    local px = pos.x or (pos.GetXY and select(1, pos:GetXY()))
+    local py = pos.y or (pos.GetXY and select(2, pos:GetXY()))
+    if not (isNum(px) and isNum(py)) then return nil end
+    local tx, ty = (x or 50) / 100, (y or 50) / 100
+    -- the same answer for 30 seconds while you stand in about the same place
+    local key = string.format("%d:%.2f:%.2f:%d:%.2f:%.2f", here, px, py, map, tx, ty)
+    local now = GetTime and GetTime() or 0
+    local hit = spfCache[key]
+    if hit and now - hit.at < 30 then return hit.seconds end
+    local ok, seconds = pcall(api.Estimate, here, px, py, map, tx, ty)
+    seconds = ok and isNum(seconds) and seconds or nil
+    spfCache[key] = { at = now, seconds = seconds }
+    return seconds
+end
+
 function PP:TravelTime(map, x, y, me)
+    if not me and map then
+        local seconds = spfTravelTime(self, map, x, y)
+        if seconds then return seconds end
+    end
     me = me or { self:PlayerWorld() }
     if not me[1] or not map then return nil end
     local tc, tx, ty = WorldPos(map, (x or 50) / 100, (y or 50) / 100)

@@ -215,6 +215,29 @@ function PP:GatherHUDTooltipTick()
     call(GameTooltip, "Show")
     tipShown = true
 end
+-- In a fight (and the "fade out in combat" option is on) the HUD is fully see-through. Checked by the game's
+-- combat events and again here several times a second, so a missed event or anything that sets the
+-- minimap's look again can never leave the big map over your character in a fight.
+local function fighting()
+    if PP:InCombat() then return true end
+    local busy = read(UnitAffectingCombat, "player")
+    return not (issecretvalue and issecretvalue(busy)) and busy == true
+end
+function PP:GatherHUDCombatSync()
+    if not saved or not self.db then return end
+    local hide = self.db.hudHideCombat and fighting() or false
+    if hide ~= combatHidden then
+        combatHidden = hide
+        call(Minimap, "SetAlpha", hide and 0 or (self.db.hudAlpha or 0.5))
+        self:GatherHUDHoverCheck()
+        counter()
+    elseif hide then
+        local alpha = read(Minimap.GetAlpha, Minimap)
+        if not (issecretvalue and issecretvalue(alpha)) and type(alpha) == "number" and alpha > 0.01 then
+            call(Minimap, "SetAlpha", 0)
+        end
+    end
+end
 local tipClock = 0
 local tipDriver = CreateFrame("Frame")
 tipDriver:SetScript("OnUpdate", function(_, dt)
@@ -222,6 +245,7 @@ tipDriver:SetScript("OnUpdate", function(_, dt)
     tipClock = tipClock + dt
     if tipClock < 0.1 then return end
     tipClock = 0
+    PP:GatherHUDCombatSync()
     PP:GatherHUDTooltipTick()
 end)
 
@@ -242,10 +266,7 @@ events:SetScript("OnEvent", function(_, event)
         call(Minimap, "SetAlpha", 0)
         PP:GatherHUDHoverCheck()
         counter()
-    elseif event == "PLAYER_REGEN_ENABLED" and combatHidden then
-        combatHidden = false
-        call(Minimap, "SetAlpha", PP.db.hudAlpha or 0.5)
-        PP:GatherHUDHoverCheck()
-        counter()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        PP:GatherHUDCombatSync()
     end
 end)

@@ -642,13 +642,11 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:SetScript("OnEvent", function()
     local target = PP.db and PP.db.guideTarget
-    -- Retire center pins saved by the earlier Skinning planner without opening the map on login.
-    if target and type(target.note) == "string" and target.note:find("Zone-center pin", 1, true)
-        and #(target.groups or {}) == 0 then
+    -- Skinning now uses beast spots like ore and herbs. A "directions only" skinning target saved by
+    -- version 1.3.8-1.3.9 is cleared, so the map never opens on it again; pick the leather again in /prof farm.
+    if target and (target.skinning or target.areaOnly or
+        (type(target.note) == "string" and target.note:find("Zone-center pin", 1, true))) then
         PP:ClearGuideTarget()
-        target.skinning, target.areaOnly, target.x, target.y = true, true, nil, nil
-        target.note = target.note:gsub("Zone%-center pin, not a beast location%.", "Directions only; choose the farm again for updated guidance.")
-        PP.db.guideTarget = target
     end
     hook()
 end)
