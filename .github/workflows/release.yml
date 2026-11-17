@@ -5,6 +5,10 @@ on:
       version:
         description: Version to release, matching the .toc (e.g. 1.4.0)
         required: true
+      release_build:
+        description: CurseForge release build (adds X-Release-Build so guildmates get update pings; replaces the zip on an existing release)
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -17,6 +21,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       VERSION: ${{ inputs.version }}
+      RELEASE_BUILD: ${{ inputs.release_build }}
       ADDON: ProfessionPal
       TITLE: ProfessionPal
     steps:
@@ -29,7 +34,23 @@ jobs:
           grep -qx "## Version: $VERSION" "src/$ADDON/$ADDON.toc" || { echo "::error::.toc version is not $VERSION"; exit 1; }
           awk -v v="$VERSION" '/^## /{if(f)exit; if($2==v)f=1; next} f' src/CHANGELOG.md | sed -e '/./,$!d' > notes.md
           [ -s notes.md ] || { echo "::error::No $VERSION section in CHANGELOG.md"; exit 1; }
+          if [ "$RELEASE_BUILD" = "true" ]; then
+            toc="src/$ADDON/$ADDON.toc"
+            grep -qi '^## X-Release-Build:' "$toc" && { echo "::error::.toc already has X-Release-Build"; exit 1; }
+            sed -i "/^## Version: ${VERSION//./\\.}\$/a ## X-Release-Build: 1" "$toc"
+            [ "$(grep -c '^## X-Release-Build: 1$' "$toc")" = 1 ] || { echo "::error::Could not add X-Release-Build"; exit 1; }
+          fi
           mkdir out
           (cd src && zip -qrX "../out/$ADDON.zip" "$ADDON")
-          gh release create "v$VERSION" out/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "$TITLE $VERSION" --notes-file notes.md --latest
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            [ "$RELEASE_BUILD" = "true" ] || { echo "::error::v$VERSION already exists"; exit 1; }
+            # Only swap in the release build zip when the addon files match what was released.
+            git -C src fetch --quiet --depth 1 origin tag "v$VERSION"
+            git -C src diff --quiet "v$VERSION" HEAD -- "$ADDON" ':!'"$ADDON/$ADDON.toc" \
+              || { echo "::error::$ADDON files differ from v$VERSION"; exit 1; }
+            gh release upload "v$VERSION" "out/$ADDON.zip" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "v$VERSION" out/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "$TITLE $VERSION" --notes-file notes.md --latest
+          fi
+          sha256sum "out/$ADDON.zip" | tee -a "$GITHUB_STEP_SUMMARY"
