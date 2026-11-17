@@ -157,6 +157,8 @@ local DEFAULTS = {
     hudOffset = 0,         -- gathering HUD: up/down from the middle of the screen, in pixels
     hudCounter = true,     -- gathering HUD: small counter of what you're farming, under the map
     hudHoverKey = "ALT",   -- gathering HUD: hold this to read node names (ALT, CTRL, SHIFT or ALWAYS)
+    minimapButton = true,  -- minimap button that opens the guide
+    minimapAngle = 200,    -- where the minimap button sits around the edge, in degrees
 }
 
 function PP:StarterSetup(restore)
@@ -904,5 +906,6 @@ SlashCmdList.PROFESSIONPAL = function(msg)
     elseif command == "hud" and PP.GatherHUDCommand then PP:GatherHUDCommand(arg)
     elseif command == "debug" and PP.FarmDebugCommand then PP:FarmDebugCommand(arg)
     elseif command == "farm" and PP.ToggleFarmPlanner then PP:ToggleFarmPlanner()
+    elseif command == "minimap" and PP.MinimapButtonCommand then PP:MinimapButtonCommand()
     elseif PP.Toggle then PP:Toggle() end
 end

@@ -1142,7 +1142,8 @@ function PP:BuildSettings()
                     if PP.HarvestGuideUpdate then PP:HarvestGuideUpdate() end
                 elseif field=="harvestMarkers" and PP.HarvestPinsUpdate then PP:HarvestPinsUpdate()
                 elseif field=="hudCounter" and PP.GatherCountRefresh then PP:GatherCountRefresh()
-                elseif field=="hudRotate" and PP.GatherHUDOn and PP:GatherHUDOn() then PP:SetGatherHUD(false); PP:SetGatherHUD(true) end
+                elseif field=="hudRotate" and PP.GatherHUDOn and PP:GatherHUDOn() then PP:SetGatherHUD(false); PP:SetGatherHUD(true)
+                elseif field=="minimapButton" and PP.MinimapButtonUpdate then PP:MinimapButtonUpdate() end
             end)
         c:SetPoint("TOPLEFT", s, "TOPLEFT", 24, y)
         y = y - 40
@@ -1195,6 +1196,7 @@ function PP:BuildSettings()
     steppers[#steppers + 1] = function() pickTheme = nil; showTheme() end
 
     AddCheck("Lock the guide window", "locked")
+    AddCheck("Show the minimap button", "minimapButton")
     AddStepper("Guide size", "scale", 0.8, 1.5, function(v)
         PP.frame:SetScale(v)
         if PP.shop then PP.shop:SetScale(v) end

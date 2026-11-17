@@ -26,7 +26,7 @@ Also on CurseForge. Version 1.3.4 · for WoW: Forever (interface 16001)
 
 Covers Mining, Herbalism, Skinning, Fishing, Blacksmithing, Alchemy, Leatherworking, Tailoring, Engineering, Enchanting, Cooking and First Aid.
 
-Type `/prof` to open it. `/prof starter` shows the simple starting settings, and `/prof restore` puts your old settings back.
+Type `/prof` or click the minimap button to open it. `/prof starter` shows the simple starting settings, and `/prof restore` puts your old settings back.
 
 ## Show me where to go
 
@@ -96,6 +96,7 @@ ProfessionPal works fine without it.
 
 ## What's new
 
+- **1.4.3:** New minimap button to open the guide (right-click for Settings). Fully restart WoW after updating.
 - **1.4.2:** The Gathering HUD no longer causes an error in the quest tracker. Type `/reload` after updating.
 - **1.4.1:** Farm Planner fixes: button names stay next to their icons, and the scroll note no longer covers the bottom line. Type `/reload` after updating.
 - **1.4.0:** A rebuilt **Farm Planner**: leather now shows beast spots and a loop on the map, just like ore and herbs, with **BEST** leather zones from the farming guides. Real travel times with Shortest Path Forever. The Gathering HUD now always hides in fights. Fully restart WoW after updating.

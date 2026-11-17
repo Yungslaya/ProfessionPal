@@ -2,6 +2,13 @@
 
 Every released version, newest first.
 
+## 1.4.3 (2026-11-17)
+
+- **Minimap button.** Left-click opens the guide, right-click opens Settings, and you can drag it around the minimap. Hide it with **Show the minimap button** in Settings, or type `/prof minimap`. It hides while the Gathering HUD is up.
+- A one-time chat message on login tells you how to open the guide.
+
+Fully restart WoW after updating (a new file was added).
+
 ## 1.4.2 (2026-11-17)
 
 - **Gathering HUD fix.** Turning the HUD on could later cause an error in the quest tracker ("tainted by ProfessionPal"). The minimap corner parts are now faded out instead of hidden, which stops it.
