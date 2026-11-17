@@ -28,6 +28,9 @@ end
 local PARTS = { "MinimapCompassTexture", "MinimapBorder", "MinimapBorderTop", "MinimapZoomIn", "MinimapZoomOut",
     "MinimapNorthTag", "MinimapBackdrop", "MiniMapTracking", "MiniMapWorldMapButton" }
 
+-- They are made fully see-through and unclickable, never hidden: hiding Blizzard's frames runs Blizzard's
+-- own hide code under ProfessionPal's name, which "taints" the UI layout and later blocks Blizzard's
+-- objective tracker ("Auras cannot be accessed when secret while tainted by 'ProfessionPal'").
 local function hideParts()
     hiddenParts = {}
     local list = {}
@@ -36,14 +39,19 @@ local function hideParts()
     list[#list + 1] = MinimapCluster
     for _, part in ipairs(list) do
         if type(part) == "table" and read(part.IsShown, part) then
-            hiddenParts[#hiddenParts + 1] = part
-            call(part, "Hide")
+            hiddenParts[#hiddenParts + 1] = { part = part, alpha = read(part.GetAlpha, part),
+                                              mouse = read(part.IsMouseEnabled, part) }
+            call(part, "SetAlpha", 0)
+            if read(part.IsMouseEnabled, part) then call(part, "EnableMouse", false) end
         end
     end
 end
 
 local function showParts()
-    for _, part in ipairs(hiddenParts or {}) do call(part, "Show") end
+    for _, saved in ipairs(hiddenParts or {}) do
+        call(saved.part, "SetAlpha", saved.alpha or 1)
+        if saved.mouse then call(saved.part, "EnableMouse", true) end
+    end
     hiddenParts = nil
 end
 

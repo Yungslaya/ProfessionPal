@@ -96,6 +96,7 @@ ProfessionPal works fine without it.
 
 ## What's new
 
+- **1.4.2:** The Gathering HUD no longer causes an error in the quest tracker. Type `/reload` after updating.
 - **1.4.1:** Farm Planner fixes: button names stay next to their icons, and the scroll note no longer covers the bottom line. Type `/reload` after updating.
 - **1.4.0:** A rebuilt **Farm Planner**: leather now shows beast spots and a loop on the map, just like ore and herbs, with **BEST** leather zones from the farming guides. Real travel times with Shortest Path Forever. The Gathering HUD now always hides in fights. Fully restart WoW after updating.
 - **1.3.9:** New **Skinning** tab in the Farm Planner with the best leather farms, Market Ledger prices for your materials, and `/prof debug` problem reports. Fully restart WoW after updating.

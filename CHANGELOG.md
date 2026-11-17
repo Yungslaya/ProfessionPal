@@ -2,6 +2,13 @@
 
 Every released version, newest first.
 
+## 1.4.2 (2026-11-17)
+
+- **Gathering HUD fix.** Turning the HUD on could later cause an error in the quest tracker ("tainted by ProfessionPal"). The minimap corner parts are now faded out instead of hidden, which stops it.
+- **Update messages** now only come from real CurseForge releases, so you never hear about a version that isn't out yet.
+
+Type `/reload` after updating.
+
 ## 1.4.1 (2026-11-17)
 
 - **Farm Planner fixes.** Button names (Mining, Copper Ore and so on) stay next to their icons after you click them, and the "Scroll for more" note no longer covers the line at the bottom of the window.
