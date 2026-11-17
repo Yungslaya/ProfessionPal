@@ -329,7 +329,7 @@ end
 -- ---------- the window ----------
 -- Big, plain and easy to read: profession tabs on top, materials (or zones) on the left,
 -- one card per zone on the right with one short line of facts and a Map button.
-local W, H = 860, 610
+local W, H = 860, 650
 local LEFT_ROWS, RIGHT_ROWS = 11, 7
 local LEFT_X, RIGHT_X, LIST_Y = 20, 300, -168
 local LEFT_W, RIGHT_W, ROW_H, CARD_H = 262, 540, 36, 58
@@ -365,6 +365,11 @@ local function iconButton(parent, w, h, onClick)
         fs:SetPoint("LEFT", b, "LEFT", h + 2, 0)
         fs:SetPoint("RIGHT", b, "RIGHT", -8, 0)
         fs:SetJustifyH("LEFT")
+        -- the plain button nudges its text back to the left edge when pressed: keep it right of the icon
+        b:SetScript("OnMouseDown", function(self)
+            if self:IsEnabled() then fs:SetPoint("LEFT", self, "LEFT", h + 3, -1) end
+        end)
+        b:SetScript("OnMouseUp", function(self) fs:SetPoint("LEFT", self, "LEFT", h + 2, 0) end)
     end
     return b
 end

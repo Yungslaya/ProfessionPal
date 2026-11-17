@@ -2,6 +2,13 @@
 
 Every released version, newest first.
 
+## 1.4.1 (2026-11-17)
+
+- **Farm Planner fixes.** Button names (Mining, Copper Ore and so on) stay next to their icons after you click them, and the "Scroll for more" note no longer covers the line at the bottom of the window.
+- You get a message when a newer version is out, from players in your guild or group who already have it.
+
+Type `/reload` after updating.
+
 ## 1.4.0 (2026-11-17)
 
 - **A rebuilt Farm Planner.** Big Mining, Herbalism and Skinning tabs, item icons, and one short line per zone: how many spots, the zone level and how far away it is.
