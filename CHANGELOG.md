@@ -2,6 +2,13 @@
 
 Every released version, newest first.
 
+## 1.5.1 (2026-11-18)
+
+- **Herb and ore reminders work again.** WoW only tells addons about herbs and ore through its Interact Key, which was off for mouse and keyboard, so only skinning showed. Tick **Float the gathering icon over herbs and ore** in Settings (or type `/prof harvest icons on`). It turns on WoW's Interact Key and the game's own floating icon over the herb or ore in front of you. Untick it to get your old settings back.
+- **Farm zones for your faction.** Alliance characters were sent to Horde starting zones for Peacebloom, Silverleaf, Earthroot and Copper. The best zones for starter herbs, Copper, Tin and Silver are now split by faction (Elwynn Forest, Dun Morogh, Teldrassil, Wetlands for Alliance), and the other faction's starting zones always go last.
+
+Type `/reload` after updating.
+
 ## 1.5.0 (2026-11-18)
 
 - **New look.** Every window now looks like a big WoW tooltip: dark blue panel, the game's own tooltip border, gold labels, white numbers and red buttons. Market Ledger, Savings Pal and Battle Buddy match. Your old theme is still in Settings > Theme.

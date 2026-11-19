@@ -1192,6 +1192,7 @@ function PP:BuildSettings()
                 PP.db[field] = v
                 if field=="harvestGuide" or field=="harvestGuideDetails" or field=="harvestAlert" then
                     if PP.HarvestGuideUpdate then PP:HarvestGuideUpdate() end
+                elseif field=="harvestIcons" and PP.HarvestIcons then PP:HarvestIcons(v)
                 elseif field=="harvestMarkers" and PP.HarvestPinsUpdate then PP:HarvestPinsUpdate()
                 elseif field=="hudCounter" and PP.GatherCountRefresh then PP:GatherCountRefresh()
                 elseif field=="hudRotate" and PP.GatherHUDOn and PP:GatherHUDOn() then PP:SetGatherHUD(false); PP:SetGatherHUD(true)
@@ -1309,6 +1310,7 @@ function PP:BuildSettings()
     head:SetText("ON-SCREEN TRACKER")
     y = y - 34
     AddCheck("Show harvest reminders (herbs, ore, skinning)", "harvestAlert")
+    AddCheck("Float the gathering icon over herbs and ore", "harvestIcons")
     AddCheck("Show arrow for the node I hover", "harvestGuide")
     AddCheck("Show detailed node text", "harvestGuideDetails")
     AddCheck("Auto-fly to my selected farming spot", "farmAutoFly")

@@ -1,4 +1,5 @@
--- ProfessionPal harvest reminders. Display only: no targeting, gathering or CVar changes.
+-- ProfessionPal harvest reminders. Display only: no targeting or gathering. Game settings (CVars) change only
+-- when you tick "Float the gathering icon over herbs and ore", and your old values come back when you untick it.
 -- Reads Blizzard's current soft-interact unit, mouseover, target and visible tooltips.
 local _, PP = ...
 local secret = issecretvalue or function() return false end
@@ -190,15 +191,55 @@ local function build()
         end
     end
     refreshSkills()
+    if PP.db.harvestIcons then PP:HarvestIcons(true) end
     local v = read((C_CVar and C_CVar.GetCVar) or GetCVar, "SoftTargetInteract")
-    if next(skills) and tonumber(v) == 0 then
-        PP:Print("Harvest reminders: enable Interact Key in WoW Options > Controls for nearby alerts. Hovered or selected harvest targets also work.")
+    -- 0 = off, 1 = gamepad only. Herbs and ore need it on for mouse and keyboard (2 or 3).
+    if PP.db.harvestAlert and (skills.herbalism or skills.mining) and tonumber(v) and tonumber(v) < 2 then
+        PP:Print("Herb and ore reminders need WoW's Interact Key. Tick \"Float the gathering icon over herbs and ore\" in /prof settings, or type /prof harvest icons on.")
     end
 end
+-- WoW's own Interact Key for mouse and keyboard, plus its floating icon over the herb, ore or corpse in front
+-- of you. Herbs and ore are world objects: the game only tells addons about them through the Interact Key,
+-- so this also lets the HERB and MINE reminders work. Skinning works without it (you can hover a corpse).
+local ICON_CVARS = { SoftTargetInteract = "3", SoftTargetIconGameObject = "1", SoftTargetIconInteract = "1" }
+local function getCVar(name) return read((C_CVar and C_CVar.GetCVar) or GetCVar, name) end
+local function setCVar(name, value)
+    local fn = (C_CVar and C_CVar.SetCVar) or SetCVar
+    if fn then pcall(fn, name, value) end
+end
+function PP:HarvestIcons(on)
+    if not self.db then return end
+    if on then
+        local before = type(self.db.harvestIconsPrev) == "table" and self.db.harvestIconsPrev or {}
+        for name, value in pairs(ICON_CVARS) do
+            local current = getCVar(name)
+            if current ~= nil then
+                if before[name] == nil then before[name] = current end
+                -- 2 and 3 already include mouse and keyboard; only turn it on when it is off or gamepad-only.
+                if name ~= "SoftTargetInteract" or (tonumber(current) or 0) < 2 then setCVar(name, value) end
+            end
+        end
+        self.db.harvestIconsPrev = before
+    else
+        for name, value in pairs(type(self.db.harvestIconsPrev) == "table" and self.db.harvestIconsPrev or {}) do
+            setCVar(name, value)
+        end
+        self.db.harvestIconsPrev = nil
+    end
+    self.db.harvestIcons = on and true or false
+    refreshAt = 0
+end
+
 function PP:HarvestCommand(arg)
     if not self.db then return end
     arg = (arg or ""):lower():match("^%s*(.-)%s*$")
     if self.HarvestGuideCommand and self:HarvestGuideCommand(arg) then return end
+    if arg == "icons on" or arg == "icons off" then
+        self:HarvestIcons(arg == "icons on")
+        self:Print(arg == "icons on" and "Gathering icons on: WoW floats the icon over the herb or ore in front of you."
+            or "Gathering icons off. Your old Interact Key settings are back.")
+        return
+    end
     if arg == "off" then self.db.harvestAlert = false; previewEnd = nil; hide(); if self.HarvestGuideUpdate then self:HarvestGuideUpdate() end; self:Print("Harvest reminders off.")
     elseif arg == "on" then self.db.harvestAlert = true; self:Print("Harvest reminders on."); self:HarvestScan()
     elseif arg == "test" or arg == "unlock" then
@@ -209,7 +250,7 @@ function PP:HarvestCommand(arg)
     elseif arg == "lock" then unlocked = false; frame:EnableMouse(false); previewEnd = nil; self:HarvestScan(); self:Print("Harvest reminder locked.")
     elseif arg == "reset" then self.db.harvestPoint = nil; place(); self:Print("Harvest reminder position reset.")
     else
-        self:Print("Harvest: /prof harvest on | off | test | unlock | lock | reset | map | skip | guide on | guide off")
+        self:Print("Harvest: /prof harvest on | off | test | unlock | lock | reset | map | skip | guide on | guide off | icons on | icons off")
         self:Print("Nearby detection uses WoW's Interact Key setting. Enable it in Options > Controls. Hovered and selected harvest targets also work. Reminders hide in combat.")
         if not next(skills) then self:Print("This character has no learned Mining, Herbalism or Skinning.") end
     end

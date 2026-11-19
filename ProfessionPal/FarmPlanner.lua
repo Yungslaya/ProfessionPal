@@ -173,9 +173,11 @@ function PP:FarmItemZones(item)
     local list = {}
     for map, count in pairs(item.zones) do
         list[#list + 1] = { map = map, name = zoneName(map), spots = count, away = self:TravelTime(map, 50, 50),
-                            here = self:CurrentMap() == map, best = self:BestZoneRank(item.name, map) }
+                            here = self:CurrentMap() == map, best = self:BestZoneRank(item.name, map),
+                            enemy = self.EnemyHome and self:EnemyHome(map) or false }
     end
     table.sort(list, function(a, b)
+        if a.enemy ~= b.enemy then return b.enemy end          -- the other faction's home zones go last
         if (a.best or 99) ~= (b.best or 99) then return (a.best or 99) < (b.best or 99) end
         if a.here ~= b.here then return a.here end
         if a.away and b.away and a.away ~= b.away then return a.away < b.away end

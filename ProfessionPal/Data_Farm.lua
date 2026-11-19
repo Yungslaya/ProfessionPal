@@ -63,9 +63,10 @@ PP.ZONE_LEVEL = {
   Read 2026-11-15. Mobalytics had no ore or herb zone guide.
 ]]
 PP.BEST_ZONES = {
-    ["Copper Ore"] = { 1426, 1411 },          -- Dun Morogh, Durotar
-    ["Tin Ore"] = { 1413, 1437 },             -- The Barrens, Wetlands
-    ["Silver Ore"] = { 1413, 1417 },          -- The Barrens, Arathi Highlands
+    -- Starter ore and herbs per faction: Icy Veins Forever routes (Alliance / Horde), zones with spawn spots.
+    ["Copper Ore"] = { Alliance = { 1426, 1429 }, Horde = { 1411, 1412 } },  -- Dun Morogh, Elwynn | Durotar, Mulgore
+    ["Tin Ore"] = { Alliance = { 1437, 1440 }, Horde = { 1413, 1424 } },     -- Wetlands, Ashenvale | Barrens, Hillsbrad
+    ["Silver Ore"] = { Alliance = { 1417, 1424 }, Horde = { 1413, 1417 } },  -- Arathi, Hillsbrad | Barrens, Arathi
     ["Iron Ore"] = { 1417, 1441 },            -- Arathi Highlands, Thousand Needles
     ["Gold Ore"] = { 1417, 1441 },            -- Arathi Highlands, Thousand Needles (rare Iron)
     ["Mithril Ore"] = { 1425, 1446 },         -- The Hinterlands, Tanaris
@@ -73,9 +74,9 @@ PP.BEST_ZONES = {
     ["Thorium Ore"] = { 1449, 1452 },         -- Un'Goro Crater, Winterspring (Rich veins)
     ["Dark Iron Ore"] = { 1428, 1427 },       -- Burning Steppes, Searing Gorge
 
-    ["Peacebloom"] = { 1420, 1412 },          -- Tirisfal Glades, Mulgore
-    ["Silverleaf"] = { 1411, 1420 },          -- Durotar, Tirisfal Glades
-    ["Earthroot"] = { 1420, 1411 },           -- Tirisfal Glades, Durotar
+    ["Peacebloom"] = { Alliance = { 1429, 1426 }, Horde = { 1420, 1412 } },  -- Elwynn, Dun Morogh | Tirisfal, Mulgore
+    ["Silverleaf"] = { Alliance = { 1429, 1438 }, Horde = { 1411, 1420 } },  -- Elwynn, Teldrassil | Durotar, Tirisfal
+    ["Earthroot"] = { Alliance = { 1426, 1429 }, Horde = { 1420, 1411 } },   -- Dun Morogh, Elwynn | Tirisfal, Durotar
     ["Mageroyal"] = { 1440, 1439 },           -- Ashenvale, Darkshore
     ["Briarthorn"] = { 1431, 1440 },          -- Duskwood, Ashenvale
     ["Stranglekelp"] = { 1440, 1439 },        -- Ashenvale, Darkshore
@@ -110,6 +111,17 @@ PP.BEST_ZONES = {
     ["Thick Leather"] = { 1446, 1444 },       -- Tanaris, Feralas
     ["Rugged Leather"] = { 1452, 1449 },      -- Winterspring, Un'Goro Crater
 }
+
+-- The other faction's starting zones: never a farming pick (guards are hostile and the trip is long).
+PP.FACTION_HOME = {
+    Alliance = { [1429] = true, [1426] = true, [1438] = true, [1436] = true, [1432] = true, [1439] = true },
+    Horde = { [1411] = true, [1412] = true, [1420] = true, [1421] = true },
+}
+function PP:EnemyHome(map)
+    local mine = self.Faction and self:Faction() or "Alliance"
+    local other = mine == "Horde" and "Alliance" or "Horde"
+    return self.FACTION_HOME[other][map] == true
+end
 
 -- 1 = the best zone for this ore / herb, 2 = second best, nil = not a top pick.
 function PP:BestZoneRank(itemName, map)
