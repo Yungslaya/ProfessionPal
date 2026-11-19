@@ -2,6 +2,18 @@
 
 Every released version, newest first.
 
+## 1.5.0 (2026-11-18)
+
+- **New look.** Every window now looks like a big WoW tooltip: dark blue panel, the game's own tooltip border, gold labels, white numbers and red buttons. Market Ledger, Savings Pal and Battle Buddy match. Your old theme is still in Settings > Theme.
+- **Skill-up chance.** The guide step now says how likely one craft is to give a skill point: always, about 60%, or none. Colors match the recipe in your profession window.
+- **Skill bar.** A bar under the step shows where the recipe is orange, yellow, green and gray, with a white mark at your skill.
+- **Shopping list cost.** With Market Ledger installed, the Shopping List says about how much the missing materials cost at the Auction House. Asking prices are not sales.
+- **Five more languages.** ProfessionPal now shows its windows, buttons, settings and messages in German, French, Spanish, Russian and Simplified Chinese when your game uses that language. Zone names use the game's own names. Item, recipe and trainer names in the guides are still in English. Only English has been tested in the game. If something looks wrong in your language, please report it.
+
+The skill-up chance uses the classic formula and the recipe colors from Wowhead, so treat it as a close guess.
+
+Fully restart WoW after updating (a new file was added).
+
 ## 1.4.4 (2026-11-17)
 
 - The **Show the minimap button** checkbox in Settings now updates right away when you type `/prof minimap`.

@@ -44,8 +44,21 @@ PP.THEME = {
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
 -- ---------- themes (Settings > Theme). Picked at login; Apply reloads the UI. ----------
-PP.THEME_ORDER = { "journal", "ledger", "midnight", "emerald", "crimson" }
+PP.THEME_ORDER = { "tooltip", "journal", "ledger", "midnight", "emerald", "crimson" }
+PP.DEFAULT_THEME = "tooltip"
+PP.TOOLTIP_EDGE = "Interface\\Tooltips\\UI-Tooltip-Border"
 PP.THEMES = {
+    -- The shared look of the whole addon family: every window is a big WoW tooltip. Blue-black
+    -- panel, the game's own tooltip border, gold labels, white values, red buttons with gold words.
+    tooltip = { name = "Tooltip", tooltip = true,
+        bg = { 0.030, 0.040, 0.090, 0.94 }, band = { 0.030, 0.040, 0.090, 0 },
+        border = { 0.730, 0.740, 0.780, 1 }, line = { 0.200, 0.230, 0.330, 1 },
+        inset = { 0.070, 0.085, 0.160, 0.92 },
+        btn = { 0.420, 0.070, 0.040, 1 }, btnHover = { 0.580, 0.110, 0.070, 1 },
+        btnSel = { 0.300, 0.050, 0.030, 1 }, btnBorder = { 0.850, 0.710, 0.420, 1 },
+        selBorder = { 1, 0.820, 0, 1 }, btnText = { 1, 0.820, 0 },
+        gold = { 1, 0.820, 0 }, white = { 1, 1, 1 }, gray = { 0.640, 0.660, 0.740 },
+        green = { 0.250, 0.880, 0.250 }, red = { 1, 0.290, 0.240 }, yellow = { 0.900, 0.820, 0.120 } },
     journal = { name = "Journal" },   -- the look above (default)
     ledger = { name = "Gold Ledger", edge = 2, font = "Fonts\\ARIALN.TTF",
         bg = { 0.086, 0.075, 0.059, 0.97 }, band = { 0.190, 0.150, 0.080, 1 },
@@ -80,25 +93,35 @@ local BASE_THEME, BASE_C, BASE_FONT = copyT(PP.THEME), copyT(PP.C), PP.FONT
 
 -- Fills PP.THEME / PP.C in place, so every window built after this uses the theme.
 function PP:ApplyTheme(key)
-    local th = PP.THEMES[key] or PP.THEMES.journal
+    local th = PP.THEMES[key] or PP.THEMES[PP.DEFAULT_THEME]
     for k in pairs(PP.THEME) do PP.THEME[k] = nil end
     for k, v in pairs(BASE_THEME) do PP.THEME[k] = copyT(v) end
     for _, k in ipairs({ "bg", "band", "border", "inset", "btn", "btnHover", "btnSel", "btnBorder", "selBorder", "btnText" }) do
         if th[k] then PP.THEME[k] = copyT(th[k]) end
     end
     PP.THEME.edge = th.edge
+    PP.THEME.tooltip, PP.THEME.line = th.tooltip, th.line and copyT(th.line) or nil
     for k, v in pairs(BASE_C) do
         local src = th[k] or v
         if PP.C[k] then for i = 1, 3 do PP.C[k][i] = src[i] end end
     end
     PP.FONT = th.font or BASE_FONT
+    if PP.LocaleFonts then PP:LocaleFonts() end
 end
 
 -- Give a BackdropTemplate frame the shared journal look. bandHeight adds the lighter header strip.
 function PP.Skin(f, bandHeight, colors)
     local T = PP.THEME
     colors = colors or {}
-    if f.SetBackdrop then
+    -- Tooltip look: windows (anything with a header strip) wear the game's own tooltip border.
+    -- Buttons, rows and boxes keep a thin flat edge so they stay crisp at small sizes.
+    local tip = T.tooltip and bandHeight
+    if tip and f.SetBackdrop then
+        f:SetBackdrop({ bgFile = WHITE, edgeFile = PP.TOOLTIP_EDGE, edgeSize = 16,
+                        insets = { left = 4, right = 4, top = 4, bottom = 4 } })
+        f:SetBackdropColor(unpack(colors.bg or T.bg))
+        f:SetBackdropBorderColor(unpack(colors.border or T.border))
+    elseif f.SetBackdrop then
         local e = T.edge or 1
         f:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = e,
                         insets = { left = e, right = e, top = e, bottom = e } })
@@ -109,16 +132,16 @@ function PP.Skin(f, bandHeight, colors)
         local band = f:CreateTexture(nil, "BACKGROUND", nil, 1)
         band:SetTexture(WHITE)
         band:SetVertexColor(unpack(T.band))
-        local e = T.edge or 1
+        local e = tip and 5 or (T.edge or 1)
         band:SetPoint("TOPLEFT", f, "TOPLEFT", e, -e)
         band:SetPoint("TOPRIGHT", f, "TOPRIGHT", -e, -e)
         band:SetHeight(bandHeight)
         local line = f:CreateTexture(nil, "BACKGROUND", nil, 2)
         line:SetTexture(WHITE)
-        line:SetVertexColor(unpack(T.border))
+        line:SetVertexColor(unpack(T.line or T.border))
         line:SetPoint("TOPLEFT", band, "BOTTOMLEFT", 0, 0)
         line:SetPoint("TOPRIGHT", band, "BOTTOMRIGHT", 0, 0)
-        line:SetHeight(T.edge or 1)
+        line:SetHeight(tip and 1 or (T.edge or 1))
         f.band, f.bandLine = band, line
     end
 end
@@ -199,7 +222,7 @@ end
 
 function PP:Print(msg)
     if DEFAULT_CHAT_FRAME then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffffd100ProfessionPal:|r " .. tostring(msg))
+        DEFAULT_CHAT_FRAME:AddMessage("|cffffd100ProfessionPal:|r " .. tostring(PP.T and PP.T(msg) or msg))
     end
 end
 
@@ -889,6 +912,12 @@ ev:SetScript("OnEvent", function(_, event)
         if not ProfessionPalDB.hoverGuideV2 then
             ProfessionPalDB.harvestGuide = false
             ProfessionPalDB.hoverGuideV2 = true
+        end
+        -- The addon family moved to one shared look. Switch everyone over once; any theme can
+        -- still be picked in Settings afterward.
+        if not ProfessionPalDB.sharedLook then
+            ProfessionPalDB.theme = PP.DEFAULT_THEME
+            ProfessionPalDB.sharedLook = true
         end
         PP.db = ProfessionPalDB
         PP:ApplyTheme(PP.db.theme)

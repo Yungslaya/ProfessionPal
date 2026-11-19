@@ -17,7 +17,7 @@ local function Text(parent, size, color, justify)
     fs:SetShadowColor(0, 0, 0, 1)
     fs:SetTextColor(unpack(color or C.white))
     fs:SetJustifyH(justify or "LEFT")
-    return fs
+    return PP.LocalizeText and PP.LocalizeText(fs) or fs   -- other languages: see Locale.lua
 end
 
 local function SetColor(fs, color) fs:SetTextColor(unpack(color)) end
@@ -40,6 +40,10 @@ local function Button(parent, label, w, h, onClick)
     fs:SetPoint("RIGHT", b, "RIGHT", -4, 0)
     OneLine(fs)
     b:SetFontString(fs)
+    if PP.T then
+        local setText = b.SetText
+        b.SetText = function(self, text) return setText(self, PP.T(text)) end
+    end
     b:SetText(label)
     b.selected = false
     local function paint(self, hover)
@@ -228,6 +232,24 @@ function PP:BuildUI()
     f.stepAccent:SetVertexColor(unpack(PP.C.gold))
     f.stepAccent:SetWidth(3)
     f.stepIcon = Icon(f, 44)
+    -- Skill bar: orange, yellow, green and gray stretches of the step's recipe, with a white mark
+    -- at your skill, the same colors the recipe has in the profession window.
+    f.skillBar = CreateFrame("Frame", nil, f)
+    f.skillBar:SetSize(300, 12)
+    local back = f.skillBar:CreateTexture(nil, "BACKGROUND")
+    back:SetTexture("Interface\\Buttons\\WHITE8X8"); back:SetVertexColor(0, 0, 0, 1); back:SetAllPoints()
+    f.skillBar.parts = {}
+    for i, rgb in ipairs({ { 0.88, 0.44, 0.16 }, { 0.90, 0.82, 0.12 }, { 0.21, 0.63, 0.21 }, { 0.42, 0.42, 0.42 } }) do
+        local part = f.skillBar:CreateTexture(nil, "ARTWORK")
+        part:SetTexture("Interface\\Buttons\\WHITE8X8"); part:SetVertexColor(rgb[1], rgb[2], rgb[3], 1)
+        f.skillBar.parts[i] = part
+    end
+    f.skillBar.mark = f.skillBar:CreateTexture(nil, "OVERLAY")
+    f.skillBar.mark:SetTexture("Interface\\Buttons\\WHITE8X8"); f.skillBar.mark:SetVertexColor(1, 1, 1, 1)
+    f.skillBar.mark:SetSize(3, 18)
+    -- tooltip-style row: gold label on the left, value on the right
+    f.chanceLabel = Text(f, 15, C.gold); f.chanceLabel:SetText("Skill-up chance")
+    f.chanceValue = Text(f, 15, C.white, "RIGHT"); f.chanceValue:SetWidth(150)
     f.stepText = Text(f, 18, C.white); f.stepText:SetWidth(TEXTW - 56)
     f.stepSub = Text(f, 15, C.gray); f.stepSub:SetWidth(TEXTW - 56)
 
@@ -317,7 +339,7 @@ end
 
 local function HideAll(f)
     for _, k in ipairs({ "headIcon", "headName", "headSkill", "alert", "secNext", "stepIcon", "stepText",
-                         "stepSub", "stepPanel", "stepAccent", "whereHead", "zoneTip", "tool", "tip", "vendorHead", "vendor",
+                         "stepSub", "stepPanel", "stepAccent", "skillBar", "chanceLabel", "chanceValue", "whereHead", "zoneTip", "tool", "tip", "vendorHead", "vendor",
                          "secTrain", "trainText", "gearHead", "gearNext", "gearBtn", "gearShopBtn", "learn", "guideLine" }) do
         if f[k] then f[k]:Hide() end
     end
@@ -439,7 +461,7 @@ function PP:Refresh()
         f.stepAccent:ClearAllPoints()
         f.stepAccent:SetPoint("TOPLEFT", f.stepPanel, "TOPLEFT", 0, 0)
         f.stepAccent:SetPoint("BOTTOMLEFT", f.stepPanel, "BOTTOMLEFT", 0, 0)
-        f.stepAccent:Show()
+        f.stepAccent:SetShown(not PP.THEME.tooltip)   -- the tooltip look has no colored side stripe
         local s = skill or 1
         local n = self:CraftsNow(st, s)
         local iconItem
@@ -463,6 +485,34 @@ function PP:Refresh()
         f.stepSub:ClearAllPoints(); f.stepSub:SetPoint("TOPLEFT", f.stepText, "BOTTOMLEFT", 0, -4); f.stepSub:Show()
         local th = P:TextH(f.stepText, 20) + P:TextH(f.stepSub, 16) + 8
         P.y = P.y - math.max(48, th) - 20
+        local edges = (not st.nodes) and skill and self.SkillRange and self:SkillRange(def, st)
+        if edges then
+            -- five edges: start, yellow, green, gray, end. Each stretch gets its share of the width.
+            local W, bar = 300, f.skillBar
+            local span = edges[5] - edges[1]
+            local x = 1
+            for i = 1, 4 do
+                local w = math.floor((W - 2) * (edges[i + 1] - edges[i]) / span + 0.5)
+                local part = bar.parts[i]
+                part:ClearAllPoints()
+                part:SetPoint("TOPLEFT", bar, "TOPLEFT", x, -1)
+                part:SetSize(math.max(w, 0.01), 10)
+                part:SetShown(w > 0)
+                x = x + w
+            end
+            local at = math.max(edges[1], math.min(edges[5], skill))
+            bar.mark:ClearAllPoints()
+            bar.mark:SetPoint("CENTER", bar, "LEFT", 1 + (W - 2) * (at - edges[1]) / span, 0)
+            P:Put(bar, 12, 24, 8)
+        end
+        local chance = (not st.nodes) and skill and self.SkillUpValue and self:SkillUpValue(def, st, skill)
+        if chance then
+            f.chanceValue:SetText(chance)
+            f.chanceValue:ClearAllPoints()
+            f.chanceValue:SetPoint("TOPLEFT", f, "TOPLEFT", 24 + 150, P.y)
+            f.chanceValue:Show()
+            P:Put(f.chanceLabel, 16, 24, 10)
+        end
 
         -- a new recipe this step needs (e.g. Heavy Linen Bandage at First Aid 40)
         recipeNeed = self:RecipeToLearn(def, st, skill)
@@ -737,6 +787,8 @@ function PP:RefreshShop()
         extra[#extra + 1] = def.gather and "Nothing to buy. Just go mine!" or "Nothing to buy for this part."
     end
     if def.tool then extra[#extra + 1] = "Keep a " .. def.tool[2] .. " in your bags." end
+    local cost = self.ShoppingCost and self:ShoppingCost(list)
+    if cost then extra[#extra + 1] = cost end
     s.notes:SetText(table.concat(extra, "\n"))
     s.notes:ClearAllPoints(); s.notes:SetPoint("TOPLEFT", s, "TOPLEFT", 30, y - 6); s.notes:Show()
     local nh = s.notes:GetStringHeight()
@@ -1176,8 +1228,8 @@ function PP:BuildSettings()
     themeText:SetPoint("TOPLEFT", s, "TOPLEFT", 30, y - 6)
     local pickTheme
     local function showTheme()
-        pickTheme = pickTheme or PP.db.theme or "journal"
-        themeText:SetText("Theme:  " .. (PP.THEMES[pickTheme] or PP.THEMES.journal).name)
+        pickTheme = pickTheme or PP.db.theme or PP.DEFAULT_THEME
+        themeText:SetText("Theme:  " .. (PP.THEMES[pickTheme] or PP.THEMES[PP.DEFAULT_THEME]).name)
     end
     local themeBtn = Button(s, "Change", 90, 30, function()
         local nxt = 1
@@ -1188,7 +1240,7 @@ function PP:BuildSettings()
     themeBtn:SetPoint("TOPLEFT", s, "TOPLEFT", 250, y)
     local applyBtn = Button(s, "Apply", 90, 30, function()
         if PP:InCombat() then PP:Print("Change the theme after combat."); return end
-        PP.db.theme = pickTheme or "journal"
+        PP.db.theme = pickTheme or PP.DEFAULT_THEME
         ReloadUI()
     end)
     applyBtn:SetPoint("LEFT", themeBtn, "RIGHT", 6, 0)

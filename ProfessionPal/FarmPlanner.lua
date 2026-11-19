@@ -239,6 +239,31 @@ local function moneyText(copper)
     return table.concat(parts, " ")
 end
 
+-- What the materials you still lack would cost at the Auction House, from Market Ledger's
+-- saved prices. Display only: it never changes the guide, its steps or their order.
+-- Returns one line of text, or nil when Market Ledger is not installed or nothing is missing.
+function PP:ShoppingCost(list, nowTime)
+    if type(_G.MarketLedger) ~= "table" or type(list) ~= "table" then return nil end
+    local total, priced, unknown, stale = 0, 0, 0, false
+    for _, t in ipairs(list) do
+        local missing = (t.need or 0) - (t.have or 0)
+        if missing > 0 and not t.made then
+            local state, copper, seenAt = self:FarmMarketPrice(t.item, nowTime)
+            if state == "ok" then
+                total, priced = total + copper * missing, priced + 1
+                if (nowTime or time()) - seenAt > FRESH_SECONDS then stale = true end
+            else
+                unknown = unknown + 1
+            end
+        end
+    end
+    if priced == 0 and unknown == 0 then return nil end
+    if priced == 0 then return "No Auction House prices yet. Scan with Market Ledger." end
+    local text = "To buy what is missing: about " .. moneyText(total)
+    if unknown > 0 then text = text .. ", plus " .. unknown .. (unknown == 1 and " item" or " items") .. " with no price" end
+    return text .. (stale and ". Prices are over a day old." or ".")
+end
+
 local function ageText(seconds)
     if seconds < 3600 then return "under an hour ago" end
     if seconds < 86400 then
