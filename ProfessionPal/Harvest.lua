@@ -106,6 +106,14 @@ local function candidate(unit)
     elseif range == true and cursorKind == kind then status = "ready" end
     return {kind=kind, name=name, required=required, skill=skills[kind], status=status, unit=unit}
 end
+function PP.HarvestMessage(state)
+    if state.status == "ready" then return "In reach", PP.C.green
+    elseif state.status == "far" then return "Move closer", PP.C.yellow
+    elseif state.status == "skill" then return "Needs " .. state.required .. " - you have " .. state.skill, PP.C.red
+    elseif state.status == "blocked" then return "Can't gather yet - check the tooltip", PP.C.yellow
+    elseif state.status == "preview" then return "Preview - drag to move", PP.C.gold end
+    return "Nearby - range not confirmed", PP.C.gray
+end
 local function hide()
     PP.harvestState = nil; lastKey = nil
     if frame then frame:Hide() end
@@ -114,18 +122,16 @@ local function show(state)
     local def = KINDS[state.kind]
     if not frame or not def then return end
     PP.harvestState = state
+    local nav = PP.harvestNavigation
+    if state.status ~= "preview" and nav and nav.confirmed and nav.name == state.name then
+        frame:Hide(); return
+    end
     local key = state.kind .. ":" .. (state.name or "") .. ":" .. state.status .. ":" .. tostring(state.required) .. ":" .. tostring(state.skill)
     if key ~= lastKey then
         lastKey = key
         frame.icon:SetTexture(def.icon)
         frame.title:SetText(def.verb .. (state.name and ("  " .. state.name) or ""))
-        local message, color
-        if state.status == "ready" then message, color = "In reach", PP.C.green
-        elseif state.status == "far" then message, color = "Move closer", PP.C.yellow
-        elseif state.status == "skill" then message, color = "Needs " .. state.required .. " - you have " .. state.skill, PP.C.red
-        elseif state.status == "blocked" then message, color = "Can't gather yet - check the tooltip", PP.C.yellow
-        elseif state.status == "preview" then message, color = "Preview - drag to move", PP.C.gold
-        else message, color = "Nearby - range not confirmed", PP.C.gray end
+        local message, color = PP.HarvestMessage(state)
         frame.status:SetText(message); frame.status:SetTextColor(unpack(color))
     end
     frame:Show()
@@ -595,8 +601,11 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
             label=goal.name
             status=detected and "Nearby" or d<=10 and "Check nearby" or ("~"..math.floor(d+0.5).." yd")
         end
+        local liveColor
+        if detected then status,liveColor=PP.HarvestMessage(live) end
         local key=label..status
         if key~=lastLabel then title:SetText(label); detail:SetText(status); lastLabel=key end
+        detail:SetTextColor(unpack(liveColor or {1,1,1}))
         title:SetTextColor(unpack(detected and live.status=="ready" and PP.C.green or PP.C.gold))
         local f=read(GetPlayerFacing)
         if numeric(f) and d>10 then
@@ -609,6 +618,8 @@ do -- Remember discovered herb/ore spots. Historical spots are never presented a
         detail:ClearAllPoints(); detail:SetPoint("TOP",0,self.db.harvestGuideDetails and -64 or -49)
         arrow:Show()
         PP.harvestNavigation={name=goal.name,kind=goal.kind,source=detected and "live" or goal.source or "history",distance=d,confirmed=detected and true or false,x=goal.x,y=goal.y,map=goal.map}
+        -- one label is enough: the head label now says "In reach" / "Move closer", so drop the card
+        if detected and PP.harvestFrame and live.status~="preview" then PP.harvestFrame:Hide() end
     end
     function PP:HarvestGuideCommand(arg)
         if arg=="debug on" then nodeDebug.enabled=true; nodeDebug.last=nil; self.db.harvestDebug=true; self:Print("Node debug on. Hover the node, then /prof harvest debug.")

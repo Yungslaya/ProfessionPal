@@ -96,6 +96,7 @@ ProfessionPal works fine without it.
 
 ## What's new
 
+- **1.5.2:** One herb/ore label instead of two; the label over your head says In reach, Move closer or the skill you need. Type `/reload` after updating.
 - **1.5.1:** Floating icon over herbs and ore (turns on WoW's Interact Key, so herb and ore reminders work), and farm zones follow your faction. Type `/reload` after updating.
 - **1.5.0:** New look, skill-up chance and skill bar, shopping list cost, five more languages. Fully restart WoW after updating.
 - **1.4.4:** The minimap checkbox in Settings follows `/prof minimap`. Type `/reload` after updating.

@@ -2,6 +2,12 @@
 
 Every released version, newest first.
 
+## 1.5.2 (2026-11-20)
+
+- **One herb and ore label.** When the label over your head points at a herb or ore, the reminder card near your character now hides. The label over your head says **In reach**, **Move closer** or what skill you need.
+
+Type `/reload` after updating.
+
 ## 1.5.1 (2026-11-18)
 
 - **Herb and ore reminders work again.** WoW only tells addons about herbs and ore through its Interact Key, which was off for mouse and keyboard, so only skinning showed. Tick **Float the gathering icon over herbs and ore** in Settings (or type `/prof harvest icons on`). It turns on WoW's Interact Key and the game's own floating icon over the herb or ore in front of you. Untick it to get your old settings back.
