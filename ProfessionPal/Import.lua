@@ -365,9 +365,10 @@ function PP:BuildGuides()
     g:Hide()
     if UISpecialFrames then table.insert(UISpecialFrames, "ProfessionPalGuides") end
     local close = CreateFrame("Button", nil, g, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", g, "TOPRIGHT", -2, -2)
+    close:SetPoint("TOPRIGHT", g, "TOPRIGHT", DragbagEmporiumTheme and -10 or -2, DragbagEmporiumTheme and -8 or -2)
 
     g.title = Text(g, 18, C.gold, "CENTER"); g.title:SetPoint("TOP", g, "TOP", 0, -11)
+    PP.Skin(g, 40, nil, { title = g.title, close = close })
     g.using = Text(g, 15, C.white); g.using:SetWidth(500); g.using:SetPoint("TOPLEFT", g, "TOPLEFT", 30, -48)
 
     g.useDefault = Button(g, "Use ProfessionPal guide", 220, 30, function() PP:SetGuide(false) end)

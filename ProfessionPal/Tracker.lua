@@ -51,7 +51,7 @@ function PP:BuildTracker()
     t:EnableMouse(true)
     t:RegisterForDrag("LeftButton")
     if t.RegisterForClicks then t:RegisterForClicks("LeftButtonUp") end
-    PP.Skin(t, 38)   -- navy panel with a lighter header strip behind the profession name
+    PP.Skin(t, 38, nil, { compact = true })   -- small ornate frame, gold rule under the profession name
 
     local pt = self.db.trackerPoint
     if type(pt) == "table" and pt[1] then
@@ -96,6 +96,7 @@ function PP:BuildTracker()
         r.fill = r:CreateTexture(nil, "BACKGROUND")
         r.fill:SetTexture("Interface\\Buttons\\WHITE8X8")
         local ins = PP.THEME.inset; r.fill:SetVertexColor(ins[1] * 1.4, ins[2] * 1.4, ins[3] * 1.4, i % 2 == 1 and 0.45 or 0.15)
+        if DragbagEmporiumTheme then r.fill:SetVertexColor(1, 1, 1, i % 2 == 1 and 0.05 or 0.02) end   -- soft stripes on the slate
         r.fill:SetAllPoints(r)
         r.icon = Icon(r, 20); r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
         r.name = Text(r, 14, C.white); r.name:SetPoint("LEFT", r.icon, "RIGHT", 6, 0); r.name:SetWidth(TW - 120)
@@ -139,6 +140,7 @@ function PP:ApplyTrackerLook()
         t:SetBackdropColor(T.bg[1], T.bg[2], T.bg[3], a)
         t:SetBackdropBorderColor(T.border[1], T.border[2], T.border[3], (a > 0) and math.max(a, 0.6) or 0)
     end
+    if DragbagEmporiumTheme then DragbagEmporiumTheme.ArtAlpha(t, a) end
     if t.band then
         t.band:SetVertexColor(T.band[1], T.band[2], T.band[3], (a > 0) and math.min(1, a + 0.15) or 0)
         t.bandLine:SetVertexColor(T.border[1], T.border[2], T.border[3], (a > 0) and math.max(a, 0.6) or 0)

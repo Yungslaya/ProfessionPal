@@ -12,7 +12,9 @@ local TEXTW = W - 60   -- text width
 local function Text(parent, size, color, justify)
     local fs = parent:CreateFontString(nil, "OVERLAY")
     size = math.max(12, size)
-    fs:SetFont(size >= 18 and (PP.TITLE_FONT or PP.FONT) or PP.FONT, size, "")
+    local E = DragbagEmporiumTheme
+    if E then E.Font(fs, size, size >= 18 and "bold" or "body")   -- big text: bold; the title font is for window titles only
+    else fs:SetFont(size >= 18 and (PP.TITLE_FONT or PP.FONT) or PP.FONT, size, "") end
     fs:SetShadowOffset(1, -1)
     fs:SetShadowColor(0, 0, 0, 1)
     fs:SetTextColor(unpack(color or C.white))
@@ -47,6 +49,10 @@ local function Button(parent, label, w, h, onClick)
     b:SetText(label)
     b.selected = false
     local function paint(self, hover)
+        if DragbagEmporiumTheme then
+            if rawget(self, "emKind") == "tab" then DragbagEmporiumTheme.Select(self, self.selected) end
+            return
+        end
         if not self.SetBackdropColor then return end
         local fill = self.selected and T.btnSel or (hover and T.btnHover or T.btn)
         self:SetBackdropColor(unpack(fill))
@@ -58,9 +64,13 @@ local function Button(parent, label, w, h, onClick)
     b:SetScript("OnEnable", function(self) fs:SetTextColor(unpack(self.textColor or C.white)) end)
     b:SetScript("OnMouseDown", function(self) if self:IsEnabled() then fs:SetPoint("LEFT", self, "LEFT", 5, -1) end end)
     b:SetScript("OnMouseUp", function(self) fs:SetPoint("LEFT", self, "LEFT", 4, 0) end)
-    function b:SetSelected(on) self.selected = on and true or false; paint(self, false) end
+    function b:SetSelected(on)
+        self.selected = on and true or false
+        if DragbagEmporiumTheme then DragbagEmporiumTheme.Select(self, self.selected) else paint(self, false) end
+    end
     function b:SetLabelColor(color) self.textColor = color; if self:IsEnabled() then fs:SetTextColor(unpack(color)) end end
     b:SetScript("OnClick", onClick)
+    if DragbagEmporiumTheme then DragbagEmporiumTheme.Button(b, "ruby") end   -- last: SetScript would drop its hooks
     return b
 end
 
@@ -76,12 +86,12 @@ local function Window(name, w, title)
     f:SetSize(w, 300)
     f:SetFrameStrata("MEDIUM")
     f:SetClampedToScreen(true)
-    PP.Skin(f, 40)
     f.title = Text(f, 18, C.gold, "CENTER")
     f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 18, -11)
     f.title:SetText(title)
     local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -2)
+    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", DragbagEmporiumTheme and -10 or -2, DragbagEmporiumTheme and -8 or -2)
+    PP.Skin(f, 40, nil, { title = f.title, close = close })
     f:EnableMouse(true)
     f:SetMovable(true)
     f:RegisterForDrag("LeftButton")
@@ -94,7 +104,14 @@ local function Window(name, w, title)
     return f
 end
 
-PP.UIText, PP.UIButton, PP.UIIcon, PP.UIWindow = Text, Button, Icon, Window
+-- Section label ("NEXT STEP", "MATERIALS"): the family's small gold title caps.
+local function Head(parent, size)
+    local fs = Text(parent, size or 16, C.gold)
+    if DragbagEmporiumTheme then DragbagEmporiumTheme.Section(fs, (size or 16) - 1) end
+    return fs
+end
+
+PP.UIText, PP.UIButton, PP.UIIcon, PP.UIWindow, PP.UIHead = Text, Button, Icon, Window, Head
 
 -- Puts things top-down. Returns a placer with :Put(widget, height, x)
 local function Placer(frame, startY)
@@ -223,7 +240,7 @@ function PP:BuildUI()
     f.headSkill = Text(f, 18, C.white)
     f.alert = Text(f, 16, C.red); f.alert:SetWidth(TEXTW)
 
-    f.secNext = Text(f, 16, C.gold); f.secNext:SetText("NEXT STEP")
+    f.secNext = Head(f, 16); f.secNext:SetText("NEXT STEP")
     f.stepPanel = f:CreateTexture(nil, "BACKGROUND", nil, 1)
     f.stepPanel:SetTexture("Interface\\Buttons\\WHITE8X8")
     f.stepPanel:SetVertexColor(unpack(PP.THEME.inset))
@@ -231,6 +248,7 @@ function PP:BuildUI()
     f.stepAccent:SetTexture("Interface\\Buttons\\WHITE8X8")
     f.stepAccent:SetVertexColor(unpack(PP.C.gold))
     f.stepAccent:SetWidth(3)
+    if DragbagEmporiumTheme then DragbagEmporiumTheme.CardOn(f, f.stepPanel) end
     f.stepIcon = Icon(f, 44)
     -- Skill bar: orange, yellow, green and gray stretches of the step's recipe, with a white mark
     -- at your skill, the same colors the recipe has in the profession window.
@@ -287,7 +305,7 @@ function PP:BuildUI()
     f.vendor = PersonRow(f)
 
     -- "GEAR FOR YOU" rows (hover = item tooltip + materials)
-    f.gearHead = Text(f, 16, C.gold)
+    f.gearHead = Head(f, 16)
     f.gear = {}
     for i = 1, 4 do
         local r = CreateFrame("Button", nil, f)
@@ -313,7 +331,7 @@ function PP:BuildUI()
     f.gearBtn = Button(f, "All Gear", 110, 26, function() PP:ToggleGear() end)
     f.gearShopBtn = Button(f, "All Materials", 130, 26, function() PP:ShowGearShopAll() end)
 
-    f.secTrain = Text(f, 16, C.gold)
+    f.secTrain = Head(f, 16)
     f.trainText = Text(f, 16, C.white); f.trainText:SetWidth(TEXTW)
     f.trainers = { PersonRow(f), PersonRow(f) }
 
@@ -461,7 +479,7 @@ function PP:Refresh()
         f.stepAccent:ClearAllPoints()
         f.stepAccent:SetPoint("TOPLEFT", f.stepPanel, "TOPLEFT", 0, 0)
         f.stepAccent:SetPoint("BOTTOMLEFT", f.stepPanel, "BOTTOMLEFT", 0, 0)
-        f.stepAccent:SetShown(not PP.THEME.tooltip)   -- the tooltip look has no colored side stripe
+        f.stepAccent:SetShown(not PP.THEME.tooltip and not DragbagEmporiumTheme)   -- the card look has no colored side stripe
         local s = skill or 1
         local n = self:CraftsNow(st, s)
         local iconItem
@@ -956,8 +974,8 @@ function PP:BuildGearShop()
     w.head = Text(body, 16, C.white); w.head:SetWidth(SHOPW - 60)
     w.forText = Text(body, 14, C.gray); w.forText:SetWidth(SHOPW - 60)
     w.status = Text(body, 16, C.green); w.status:SetWidth(SHOPW - 60)
-    w.matHead = Text(body, 16, C.gold); w.matHead:SetText("MATERIALS")
-    w.planHead = Text(body, 16, C.gold); w.planHead:SetText("RECIPES")
+    w.matHead = Head(body, 16); w.matHead:SetText("MATERIALS")
+    w.planHead = Head(body, 16); w.planHead:SetText("RECIPES")
     w.rows = {}
     for i = 1, 120 do
         local r = CreateFrame("Frame", nil, body)
@@ -1322,7 +1340,7 @@ function PP:BuildSettings()
     AddStepper("Background", "trackerAlpha", 0, 1, function() PP:ApplyTrackerLook() end, "Lighter", "Darker")
     AddStepper("Tracker size", "trackerScale", 0.7, 1.5, function() PP:ApplyTrackerLook() end)
 
-    local hudHead = Text(s, 16, C.gold)
+    local hudHead = Head(s, 16)
     hudHead:SetPoint("TOPLEFT", s, "TOPLEFT", 24, y - 8)
     hudHead:SetText("GATHERING HUD")
     y = y - 30

@@ -2,6 +2,15 @@
 
 Every released version, newest first.
 
+## 1.6.0 (2026-11-21)
+
+- **New look.** Every window and the tracker have a stone frame with gold corners, new fonts and red gold-edged buttons. Our other addons now look the same.
+- **Button text fits.** Long button names shrink to fit, so they are no longer cut off.
+- **Tabs show where you are.** The profession you are on has a gold line under it.
+- **What's new window.** After an update, one window shows what changed, with a tab for each of our addons you have. Type `/prof news` to see it again.
+
+Fully restart WoW after updating (new files were added).
+
 ## 1.5.2 (2026-11-20)
 
 - **One herb and ore label.** When the label over your head points at a herb or ore, the reminder card near your character now hides. The label over your head says **In reach**, **Move closer** or what skill you need.

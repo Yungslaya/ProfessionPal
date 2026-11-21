@@ -17,8 +17,8 @@ _G.ProfessionPal = PP
 PP.professions = {}
 PP.byKey = {}
 
-PP.FONT = "Fonts\\ARIALN.TTF"
-PP.TITLE_FONT = "Fonts\\FRIZQT__.TTF"
+PP.FONT = DragbagEmporiumTheme.body
+PP.TITLE_FONT = DragbagEmporiumTheme.title
 PP.C = {
     gold   = { 0.94, 0.78, 0.47 },
     white  = { 0.93, 0.94, 0.96 },
@@ -105,12 +105,27 @@ function PP:ApplyTheme(key)
         local src = th[k] or v
         if PP.C[k] then for i = 1, 3 do PP.C[k][i] = src[i] end end
     end
-    PP.FONT = th.font or BASE_FONT
+    PP.FONT = DragbagEmporiumTheme.body
+    -- one look for the whole addon family: the shared gold, white and gray
+    local E = DragbagEmporiumTheme
+    for name, src in pairs({ gold = E.GOLD, white = E.WHITE, gray = E.MUTE }) do
+        if PP.C[name] then for i = 1, 3 do PP.C[name][i] = src[i] end end
+    end
+    PP.THEME.btnText = { E.BTN[1], E.BTN[2], E.BTN[3] }
     if PP.LocaleFonts then PP:LocaleFonts() end
 end
 
 -- Give a BackdropTemplate frame the shared journal look. bandHeight adds the lighter header strip.
-function PP.Skin(f, bandHeight, colors)
+-- The family look (EmporiumTheme.lua): windows get the ornate frame, boxes become steel cards.
+-- opts: { compact = true } for small overlays, title = the title text, close = the close button.
+function PP.Skin(f, bandHeight, colors, opts)
+    local E = DragbagEmporiumTheme
+    if E then
+        if bandHeight or opts then return E.Window(f, bandHeight, opts) end
+        -- buttons: UI.lua styles them when built
+        if colors and colors.bg == PP.THEME.btn and f.IsObjectType and f:IsObjectType("Button") then return end
+        return E.Card(f)
+    end
     local T = PP.THEME
     colors = colors or {}
     -- Tooltip look: windows (anything with a header strip) wear the game's own tooltip border.
